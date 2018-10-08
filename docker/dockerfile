@@ -27,10 +27,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.4-Linux-x86_
 
 
 # Install additional r packages
-RUN R -e "devtools::install_github('Azure/rAzureBatch')" && \
-    R -e "devtools::install_github('Azure/doAzureParallel')" && \
-    R -e "devtools::install_github('carlanetto/M4comp2018')" && \
-    R -e "install.packages(c('doParallel', 'forecast', 'opera', 'argparse'))"
+RUN R -e "devtools::install_github('Azure/rAzureBatch')"
+RUN R -e "devtools::install_github('Azure/doAzureParallel')"
+RUN R -e "devtools::install_github('carlanetto/M4comp2018')"
+RUN R -e "install.packages(c('doParallel', 'forecast', 'opera', 'forecastHybrid', 'argparse', 'dotenv'))"
 
 RUN mkdir rbatch
 

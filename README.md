@@ -14,13 +14,13 @@
 
 1. Clone the repository `git clone`
 2. `cd` into repo directory
-3. Pull the docker image
+3. Build the docker image
     ```bash
-    docker pull
+    docker build -t <image-tag> docker/.
     ```
 4. Get the data
     ```bash
-    docker run --rm -v $(pwd):/rbatch rbatch /bin/bash -c 'cd rbatch; Rscript R/get_data.R' --rm
+    docker run --rm -v $(pwd):/rbatch rbatch /bin/bash -c 'cd rbatch; Rscript R/get_data.R'
     ```
 5. Complete the doAzureParallel [setup instructions](https://github.com/Azure/doAzureParallel#setup), making a note of your resource names in [template.env](./template.env). Copy and save the credentials from the setup script in [credentials.json](./credentials.json).
 
@@ -34,7 +34,7 @@
 ## Generate forecasts locally
 1. Start an RStudio session in the docker container
     ```bash
-    docker run -v $(pwd):/rbatch -d -p 8787:8787 -e PASSWORD=<password> --name rbatch angusrtaylor/rbatch /init
+    docker run -v $(pwd):/rbatch --env-file .env -d -p 8787:8787 -e PASSWORD=<password> --name rbatch angusrtaylor/batchforecasting /init
     ```
 
 
