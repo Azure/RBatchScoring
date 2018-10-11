@@ -65,6 +65,7 @@ series_list <- load_data("data")[1:NUM_TIME_SERIES]
 
 generate_forecast <- function(ts_idx) {
   series <- df2ts(series_list[[ts_idx]])$train
+  series <- window(series, 1990)
   hybrid <- hybridModel(y = series,
                         weights = "equal",
                         errorMethod = "MAE",
@@ -76,18 +77,91 @@ generate_forecast <- function(ts_idx) {
 
 autoplot(generate_forecast(20))
 
+# Create cluster ----------------------------------------------------------
 
-# Upload data to storage account ------------------------------------------
-
-system(
-  sprintf("az storage file upload -s resources --source R/mnist_cnn.R --path R --account-name %s",
-          RBATCH_SA)
-)
+setCredentials("azure/credentials.json")
 
 RBATCH_SA_KEY <- system(
   sprintf('az storage account keys list -g %s --account-name %s --query "[0].value" | tr -d \'"\'', RBATCH_RG, RBATCH_SA),
   intern = TRUE
 )
+
+create_cluster_config()
+
+#clust <- makeCluster("azure/cluster.json")
+#clust <- getCluster("antarbatchclust", verbose = TRUE)
+
+registerDoAzureParallel(clust)
+
+# Check number of workers
+getDoParWorkers()
+
+# Run generate forecast on batch ------------------------------------------
+
+setVerbose(TRUE)
+
+num_nodes <- 25
+
+azure_options <- list(
+  chunksize = 1,
+  enableCloudCombine = TRUE,
+  autoDeleteJob = FALSE
+)
+
+pkgs2load <- c("dplyr",
+              "lubridate",
+              "forecast",
+              "forecastHybrid",
+              "doParallel",
+              "parallel")
+
+system.time({
+  
+  forecasts <- foreach(ts_idx=1:NUM_TIME_SERIES,
+                       .options.azure = azure_options,
+                       .packages = pkgs2load) %dopar% {
+    generate_forecast(ts_idx)                     }
+  
+})
+
+autoplot(forecasts[[100]])
+
+
+
+chunks <- split(1:NUM_TIME_SERIES, rep(1:num_nodes, each=NUM_TIME_SERIES/num_nodes))
+
+system.time({
+  
+  forecasts <- foreach(node_idx=1:num_nodes,
+                       .options.azure = azure_options,
+                       .packages = pkgs2load) %dopar% {
+                         
+    cores <- detectCores()
+    cl <- parallel::makeCluster(cores)
+    registerDoParallel(cl)
+    
+    chunk <- chunks[[node_idx]]
+    inner_results <- foreach(ts_idx = chunk[1]:chunk[length(chunk)],
+                             .packages = pkgs2load) %dopar% {
+      generate_forecast(ts_idx)
+    }
+    
+    return(inner_results)
+  
+  }
+
+})
+
+getJobFile('job20181010133439', '19', 'stderr.txt')
+getJobFile('job20181010133439', '19', 'stdout.txt')
+getJobFile('job20181010133439', '24', '.txt')
+
+forecasts <- unlist(forecasts, recursive = FALSE)
+
+unlist(forecasts[[1]])
+
+# Upload data to storage account ------------------------------------------
+
 
 system(
   sprintf("az storage share create -n %s --account-name %s", RBATCH_SHARE, RBATCH_SA)
@@ -99,72 +173,6 @@ system(
           RBATCH_SA_KEY,
           RBATCH_SHARE)
 )
-
-# Create cluster ----------------------------------------------------------
-
-setCredentials("azure/credentials.json")
-
-create_cluster_config()
-
-clust <- makeCluster("azure/cluster.json")
-
-registerDoAzureParallel(clust)
-
-# Check number of workers
-getDoParWorkers()
-
-# Run generate forecast on batch ------------------------------------------
-
-num_nodes <- 25
-
-chunks <- split(1:NUM_TIME_SERIES, 1:25)
-
-azure_options <- list(
-  chunksize = 1,
-  enableCloudCombine = TRUE
-)
-
-pkgs2load <- c("dplyr",
-              "lubridate",
-              "forecast",
-              "forecastHybrid",
-              "doParallel",
-              "parallel")
-system.time({
-  
-  forecasts <- foreach(ts_idx=1:NUM_TIME_SERIES,
-                       .options.azure = azure_options,
-                       .packages = pkgs2load) %dopar% {
-    generate_forecast(ts_idx)
-                       }
-  
-})
-
-autoplot(forecasts[[1]])
-
-
-forecasts <- foreach(node_idx=1:num_nodes,
-                     .options.azure = azure_options,
-                     .packages = pkgs2load) %dopar% {
-  cores <- detectCores()
-  print(cores)
-  cl <- parallel::makeCluster(cores)
-  registerDoParallel(cl)
-  
-  inner_results <- foreach(ts_idx = chunks[[node_idx]],
-                           .packages = pkgs2load) %dopar% {
-    generate_forecast(ts_idx)
-  }
-  
-  inner_results
-
-}
-
-forecasts <- unlist(forecasts, recursive = FALSE)
-
-unlist(forecasts[[1]])
-
 # Create ACR/ACI/logic app ------------------------------------------------
 
-
-
+stopCluster(clust)

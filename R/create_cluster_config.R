@@ -9,7 +9,7 @@ create_cluster_config <- function() {
   config = list(
     name = RBATCH_CLUST,
     vmSize = "Standard_D4s_v3",
-    maxTasksPerNode = 1,
+    maxTasksPerNode = 4,
     poolSize = list(
         dedicatedNodes = list(
           min = 25,
