@@ -1,0 +1,137 @@
+---
+title: "Batch forecasting with R models"
+output: github_document
+---
+
+```{r, warning=FALSE}
+library(dotenv)
+library(forecast)
+library(forecastHybrid)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(tidyr)
+library(jsonlite)
+library(doParallel)
+library(doAzureParallel)
+source("R/settings.R")
+source("R/utilities.R")
+source("R/create_cluster_config.R")
+```
+
+Get the data
+```{r}
+source("R/get_data.R")
+```
+
+Load an example time series
+```{r}
+ts_list <- load_data("data")[1:NUM_TIME_SERIES]
+ts_idx <- 50
+df <- ts_list[[ts_idx]]
+head(df)
+```
+
+Split into a training and test period. Plot the training data.
+```{r}
+series <- df2ts(df, test_period = HORIZON)
+train <- series$train
+test <- series$test
+plot(train)
+```
+
+Generate an equally weighted ensemble forecast
+```{r}
+
+hybrid <- hybridModel(y = train,
+                   weights = "equal",
+                   errorMethod = "MAE",
+                   models = MODELS,
+                   lambda = "auto")
+
+
+evaluate_models(hybrid)
+```
+
+Plot all forecasts and actuals on test set
+```{r}
+plot_forecasts(hybrid)
+```
+
+Plot weighted ensemble forecast
+```{r}
+plot(forecast(hybrid, h = HORIZON))
+```
+
+Create and test a function to generate forecasts
+```{r}
+generate_forecast <- function(ts_idx) {
+  series <- df2ts(ts_list[[ts_idx]])$train
+  hybrid <- hybridModel(y = series,
+                        weights = "equal",
+                        errorMethod = "MAE",
+                        models = MODELS,
+                        lambda = "auto",
+                        verbose = FALSE)
+  forecast(hybrid, h = HORIZON)$mean
+}
+
+autoplot(generate_forecast(20))
+```
+
+Set credentials
+```{r, results='hide'}
+RBATCH_SA_KEY <- system(
+  sprintf('az storage account keys list -g %s --account-name %s --query "[0].value" | tr -d \'"\'', RBATCH_RG, RBATCH_SA),
+  intern = TRUE
+)
+setCredentials("azure/credentials.json")
+```
+
+Create and register cluster
+```{r}
+create_cluster_config()
+clust <- makeCluster("azure/cluster.json")
+#clust <- getCluster("antarbatchclust", verbose = TRUE)
+registerDoAzureParallel(clust)
+```
+
+Check number of workers
+```{r}
+getDoParWorkers()
+```
+
+Generate forecasts in parallel on Azure Batch
+```{r}
+setVerbose(TRUE)
+
+num_nodes <- 5
+
+azure_options <- list(
+  chunksize = 1,
+  enableCloudCombine = TRUE,
+  autoDeleteJob = FALSE
+)
+
+pkgs2load <- c("dplyr",
+              "lubridate",
+              "forecast",
+              "forecastHybrid",
+              "doParallel",
+              "parallel")
+
+
+forecasts <- foreach(ts_idx=1:NUM_TIME_SERIES,
+                     .options.azure = azure_options,
+                     .packages = pkgs2load) %dopar% {
+                       
+                       generate_forecast(ts_idx)
+                       
+                       }
+```
+
+Plot a forecast
+```{r}
+autoplot(forecasts[[50]])
+```
+

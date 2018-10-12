@@ -1,5 +1,5 @@
 # Specify the number of time series to forecast
-NUM_TIME_SERIES <- 100
+NUM_TIME_SERIES <- 50
 
 # Align all time series to finish on END PERIOD
 END_PERIOD <- strptime("2019-12-01", "%Y-%m-%d")

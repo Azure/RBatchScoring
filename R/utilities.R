@@ -1,6 +1,6 @@
 load_data <- function(data_dir) {
   dat <- read.csv(file.path(data_dir, 'data.csv'))
-  split(dat, f = dat$ID)
+  df_list <- split(dat, f = dat$ID)[1:10000]
 }
 
 df2ts <- function(df, test_period = 0) {

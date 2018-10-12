@@ -1,10 +1,11 @@
 
 create_cluster_config <- function() {
   
-  mountStr <- "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/data -o vers=3.0,username=%s,password=%s,dir_mode=0777,file_mode=0777,sec=ntlmssp"
-  mountCmd <- sprintf(mountStr, RBATCH_SA, RBATCH_SHARE, RBATCH_SA, RBATCH_SA_KEY)
-  commandLine = c("mkdir /mnt/batch/tasks/shared/data",
-                  mountCmd)
+  #mountStr <- "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/data -o vers=3.0,username=%s,password=%s,dir_mode=0777,file_mode=0777,sec=ntlmssp"
+  #mountCmd <- sprintf(mountStr, RBATCH_SA, RBATCH_SHARE, RBATCH_SA, RBATCH_SA_KEY)
+  #commandLine = c("mkdir /mnt/batch/tasks/shared/data",
+  #                mountCmd)
+  commandLine = c()
   
   config = list(
     name = RBATCH_CLUST,
@@ -12,8 +13,8 @@ create_cluster_config <- function() {
     maxTasksPerNode = 4,
     poolSize = list(
         dedicatedNodes = list(
-          min = 25,
-          max = 25
+          min = 5,
+          max = 5
         ),
         lowPriorityNodes = list(
           min = 0,

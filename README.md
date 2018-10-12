@@ -12,24 +12,31 @@
 
 ## Setup
 
-1. Clone the repository `git clone`
-2. `cd` into repo directory
-3. Build the docker image
+1. Clone the repository
+    ```
+     git clone https://github.com/Azure/BatchForecasting.git
+     cd BatchForecasting
+    ```
+2. Build the docker image
     ```bash
     docker build -t <image-tag> docker/.
     ```
-4. Get the data
-    ```bash
-    docker run --rm -v $(pwd):/rbatch rbatch /bin/bash -c 'cd rbatch; Rscript R/get_data.R'
-    ```
-5. Complete the doAzureParallel [setup instructions](https://github.com/Azure/doAzureParallel#setup), making a note of your resource names in [template.env](./template.env). Copy and save the credentials from the setup script in [credentials.json](./credentials.json).
-
-    Note: you can set up doAzureParallel with shared access key or Azure Active Directory authentication (see [here](https://github.com/Azure/doAzureParallel/blob/master/docs/02-getting-started-script.md))
-6. Finish filling out template.env, copy to new file and load
+3. Finish filling out template.env, copy to new file and load
     ```
     cp template.env .env
     source .env
     ```
+3. Set up doAzureParallel resources
+    ```bash
+    docker run --rm angusrtaylor/batchforecasting
+    ```
+3. Get the data
+    ```bash
+    docker run --rm -v $(pwd):/rbatch rbatch /bin/bash -c 'cd rbatch; Rscript R/get_data.R'
+    ```
+4. Complete the doAzureParallel [setup instructions](https://github.com/Azure/doAzureParallel#setup), making a note of your resource names in [template.env](./template.env). Copy and save the credentials from the setup script in [credentials.json](./credentials.json).
+
+    Note: you can set up doAzureParallel with shared access key or Azure Active Directory authentication (see [here](https://github.com/Azure/doAzureParallel/blob/master/docs/02-getting-started-script.md))
 
 ## Generate forecasts locally
 1. Start an RStudio session in the docker container
@@ -63,16 +70,6 @@
     Rscript R/create_cluster_config.R --clust $RBATCH_CLUST --sa $RBATCH_SA --sakey $RBATCH_SA_KEY --share $RBATCH_SHARE
     ```
 
-## Generate forecasts using doAzureParallel
-
-
-
-## Using your own docker image
-
-You can customize your docker image
-
+## Azure resource setup
 ```
-
 ```
-    ```
-8. 

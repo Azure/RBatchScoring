@@ -65,7 +65,6 @@ series_list <- load_data("data")[1:NUM_TIME_SERIES]
 
 generate_forecast <- function(ts_idx) {
   series <- df2ts(series_list[[ts_idx]])$train
-  series <- window(series, 1990)
   hybrid <- hybridModel(y = series,
                         weights = "equal",
                         errorMethod = "MAE",
