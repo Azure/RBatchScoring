@@ -1,6 +1,0 @@
-.env
-data/*
-.rstudio/
-azure/cluster.json
-azure/credentials.json
-BatchForecasting_files/
