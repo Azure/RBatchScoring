@@ -1,0 +1,8 @@
+# Dockerfile for the worker image
+FROM rocker/tidyverse:3.5.1
+
+RUN R -e "install.packages('forecast')"
+
+WORKDIR /job
+
+CMD ["R"]

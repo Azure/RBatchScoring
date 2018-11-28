@@ -1,0 +1,9 @@
+data/*
+azure/logic_app.json
+azure/credentials.json
+azure/logic_app.json
+forecasts/*
+azure/cluster.json
+azure/credentials.json
+.env
+lookup.csv
