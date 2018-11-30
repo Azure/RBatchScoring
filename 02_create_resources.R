@@ -1,30 +1,36 @@
 ######################
 
 # Enter resource names
-RESOURCE_GROUP <- ""
-FILE_SHARE_NAME <- ""
-CLUSTER_NAME <- ""
+RESOURCE_GROUP <- "bfrg"
+FILE_SHARE_NAME <- "bffs"
+CLUSTER_NAME <- "bfclust"
 WORKER_CONTAINER_IMAGE <- ""
-VM_SIZE <- ""
-NUM_NODES <- ""
+VM_SIZE <- "Standard_DS3_v2"
+NUM_NODES <- "5"
   
 ######################
 
-
-# library(dotenv) Use in future scripts to load previously specified env variables
 library(jsonlite)
 library(doAzureParallel)
 
 source("R/utilities.R")
 source("R/create_cluster_config.R")
 
+
 # Create a .env file
+
 run("touch .env")
+
+
+# Create azure credentials file. Paste doAzureParallel setup output in this file.
+
+run("touch azure/credentials.json")
 
 
 # Get environment variables from credentials.json
 
 credentials <- fromJSON(file.path("azure", "credentials.json"))
+
 
 # Set R environment variables and add to .env file
 
