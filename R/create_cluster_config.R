@@ -15,14 +15,14 @@ create_cluster_config <- function(save_dir) {
     maxTasksPerNode = 1,
     poolSize = list(
       dedicatedNodes = list(
-        min = 5,
+        min = 1,
         max = as.integer(Sys.getenv("NUM_NODES"))
       ),
       lowPriorityNodes = list(
         min = 0,
         max = 0
       ),
-      autoscaleFormula = "QUEUE"
+      autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
     containerImage = Sys.getenv("WORKER_CONTAINER_IMAGE"),
     commandLine = commandLine
