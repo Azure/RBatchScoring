@@ -1,11 +1,11 @@
 ######################
 
 # Enter resource names
-RESOURCE_GROUP <- "bfrg"
-FILE_SHARE_NAME <- "bffs"
-CLUSTER_NAME <- "bfclust"
+RESOURCE_GROUP <- ""
+FILE_SHARE_NAME <- ""
+CLUSTER_NAME <- ""
 WORKER_CONTAINER_IMAGE <- ""
-VM_SIZE <- "Standard_DS3_v2"
+VM_SIZE <- "Standard_DS2_v2"
 NUM_NODES <- "5"
   
 ######################
@@ -22,11 +22,6 @@ source("R/create_cluster_config.R")
 run("touch .env")
 
 
-# Create azure credentials file. Paste doAzureParallel setup output in this file.
-
-run("touch azure/credentials.json")
-
-
 # Get environment variables from credentials.json
 
 credentials <- fromJSON(file.path("azure", "credentials.json"))
@@ -35,6 +30,7 @@ credentials <- fromJSON(file.path("azure", "credentials.json"))
 # Set R environment variables and add to .env file
 
 setenv("RESOURCE_GROUP", RESOURCE_GROUP)
+setenv("REGION", unlist(strsplit(credentials$batchAccount$url, "\\."))[2])
 setenv("FILE_SHARE_NAME", FILE_SHARE_NAME)
 setenv("STORAGE_ACCOUNT_NAME", credentials$storageAccount$name)
 setenv("STORAGE_ACCOUNT_KEY", credentials$storageAccount$key)
