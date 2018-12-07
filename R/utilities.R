@@ -5,7 +5,7 @@ read_all_data <- function(filedir) {
   do.call(rbind, files)
 }
 
-df2list <- function(store_brand, dat, start = c(1, 1)) {
+df2list <- function(store_brand, dat, start = c(0, 0)) {
   s <- store_brand$store
   b <- store_brand$brand
   df <- dat %>% filter(store == s, brand == b)
