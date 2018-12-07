@@ -15,7 +15,7 @@ create_cluster_config <- function(save_dir) {
     maxTasksPerNode = 1,
     poolSize = list(
       dedicatedNodes = list(
-        min = 1,
+        min = as.integer(Sys.getenv("NUM_NODES")),
         max = as.integer(Sys.getenv("NUM_NODES"))
       ),
       lowPriorityNodes = list(
