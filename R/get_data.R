@@ -75,9 +75,9 @@ fill_time_series <- function(dat) {
 
 dat <- fill_time_series(dat)
 
-# Set first week to be 1
+# Set first week to be 0
 
-dat$week <- dat$week - min(dat$week) + 1
+dat$week <- dat$week - min(dat$week)
 
 dat$logsales <- dat$logmove
 dat$logmove <- NULL
