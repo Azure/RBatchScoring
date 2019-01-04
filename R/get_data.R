@@ -108,62 +108,72 @@ dat <- dat %>%
 # Create data directories
 
 dir.create("data")
-dir.create(file.path("data", "training"))
-dir.create(file.path("data", "scoring"))
-dir.create(file.path("data", "scoring", "history"))
-dir.create(file.path("data", "scoring", "futurex"))
 
 
-# Save training data (reserve last 4 weeks for scoring)
+# Split data by product and write to disk
 
-train <- dat %>% filter(week <= max(dat$week) - 4)
-
-write.csv(train, file = file.path("data", "training", "train.csv"),
-          quote = FALSE, row.names = FALSE)
-
-
-# Expand scoring data
-
-print("Expanding scoring data...")
-
-# Reserve the last 4 weeks for scoring, plus a further 8 weeks for lagged features
-
-scoring <- dat %>% filter(week > max(dat$week) - 12)
-
-
-# Replicate brands to ~40,000 skus (https://www.marketwatch.com/story/grocery-stores-carry-40000-more-items-than-they-did-in-the-1990s-2017-06-07)
-
-multiplier <- floor(40000 / length(unique(dat$product)))
-
-max_week <- max(scoring$week)
-
-system.time({
-  
-  pb = txtProgressBar(min = 0, max = multiplier, initial = 0)
-  
-  for (m in 1:multiplier) {
-    
-    #if (m %% 100 == 0) print(paste("Generated", m, "of", multiplier, "products..."))
-    setTxtProgressBar(pb, m)
-    
-    recent_history <- scoring %>%
-      filter(week <= max_week - 4) %>%
-      select(product, sku, store, week, sales) %>%
-      mutate(product = m)
-    
-    write.csv(recent_history, file.path("data", "scoring", "history", paste0(m, ".csv")),
-              quote = FALSE, row.names = FALSE)
-    
-    futurex <- scoring %>%
-      filter(week > max_week - 4) %>%
-      select(-sales) %>%
-      mutate(product = m)
-    
-    write.csv(futurex, file.path("data", "scoring", "futurex", paste0(m, ".csv")),
-              quote = FALSE, row.names = FALSE)
-    
-  }
-  
+lapply(unique(dat$product), function(p) {
+  write.csv(
+    dat %>% filter(product == p),
+    file = file.path("data", paste0("product_", p, ".csv")),
+    quote = FALSE,
+    row.names = FALSE
+  )
 })
+#write.csv(dat, file = file.path("data", "small.csv"),
+#          quote = FALSE, row.names = FALSE)
 
 print("Done")
+
+# # Save training data (reserve last 4 weeks for scoring)
+# 
+# train <- dat %>% filter(week <= max(dat$week) - 4)
+# 
+# write.csv(train, file = file.path("data", "training", "train.csv"),
+#           quote = FALSE, row.names = FALSE)
+# 
+
+# # Expand scoring data
+# 
+# print("Expanding scoring data...")
+# 
+# # Reserve the last 4 weeks for scoring, plus a further 8 weeks for lagged features
+# 
+# scoring <- dat %>% filter(week > max(dat$week) - 12)
+# 
+# 
+# # Replicate brands to ~40,000 skus (https://www.marketwatch.com/story/grocery-stores-carry-40000-more-items-than-they-did-in-the-1990s-2017-06-07)
+# 
+# multiplier <- floor(40000 / length(unique(dat$product)))
+# 
+# max_week <- max(scoring$week)
+# 
+# system.time({
+#   
+#   pb = txtProgressBar(min = 0, max = multiplier, initial = 0)
+#   
+#   for (m in 1:multiplier) {
+#     
+#     #if (m %% 100 == 0) print(paste("Generated", m, "of", multiplier, "products..."))
+#     setTxtProgressBar(pb, m)
+#     
+#     recent_history <- scoring %>%
+#       filter(week <= max_week - 4) %>%
+#       select(product, sku, store, week, sales) %>%
+#       mutate(product = m)
+#     
+#     write.csv(recent_history, file.path("data", "scoring", "history", paste0(m, ".csv")),
+#               quote = FALSE, row.names = FALSE)
+#     
+#     futurex <- scoring %>%
+#       filter(week > max_week - 4) %>%
+#       select(-sales) %>%
+#       mutate(product = m)
+#     
+#     write.csv(futurex, file.path("data", "scoring", "futurex", paste0(m, ".csv")),
+#               quote = FALSE, row.names = FALSE)
+#     
+#   }
+#   
+# })
+# 
