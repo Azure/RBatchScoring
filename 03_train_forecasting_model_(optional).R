@@ -86,7 +86,7 @@ create_features <- function(dat, step = 1) {
     group_by(product, sku, store) %>%
     mutate(level = cummean(lag1)) %>%
     ungroup() %>%
-    select(-c(lag2, lag3, lag4, lag5, store))
+    select(-c(lag2, lag3, lag4, lag5))
 }
 
 

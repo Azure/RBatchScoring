@@ -2,9 +2,20 @@
 library(dotenv)
 library(dplyr)
 library(doAzureParallel)
+library(gbm)
 
 source("R/utilities.R")
+source("R/options.R")
 
+forecast_start_week <- 120 - FORECAST_HORIZON + 1
+NLAGS <- 5
+
+model_names <- expand.grid(1:7, c(0.5)) # c(0.05, 0.25, 0.5, 0.75, 0.95)
+colnames(model_names) <- c("step", "quantile")
+model_names$names <- paste0(
+  "gbm_t", as.character(model_names$step),
+  "_q",as.character(model_names$quantile * 100))
+model_names <- model_names$names
 
 # Register batch pool
 
@@ -17,22 +28,23 @@ getDoParWorkers()
 # Tell node the mount location for data and forecasts directories
 
 file_dir <- "/mnt/batch/tasks/shared/files"
+#file_dir <- "../bffs/"
 
 
 # List of packages to load on each node
 
-pkgs_to_load <- c("dplyr", "forecast")
-
-
-# Iterate over forecast 'segments' (store/brand combinations)
-
-lookup <- read.csv("lookup.csv")
-segments <- split(lookup, seq(nrow(lookup)))
+pkgs_to_load <- c("dplyr", "gbm")
 
 
 # doAzureParallel job options
 
-chunksize <- ceiling(length(segments) / as.integer(Sys.getenv("NUM_NODES")))
+# chunksize <- ceiling(3636 / as.integer(Sys.getenv("NUM_NODES")))
+chunksize <- 1
+
+num_nodes <- as.numeric(Sys.getenv("NUM_NODES"))
+reps <- rep(1:num_nodes, each=3636/num_nodes)
+reps <- c(reps, rep(max(reps), 3636 - length(reps)))
+chunks <- split(1:3636, reps)
 
 azure_options <- list(
   chunksize = chunksize,
@@ -40,32 +52,60 @@ azure_options <- list(
   autoDeleteJob = FALSE
 )
 
+load_model <- function(name, path) {
+  list(name = name, model = readRDS(file.path(path, name)))
+}
+
 
 # Generate forecasts
 
-result <- foreach(idx=1:length(segments),
+system.time({
+result <- foreach(idx=1:length(chunks),
                      .options.azure = azure_options,
                      .packages = pkgs_to_load) %dopar% {
                        
+  models <- lapply(model_names, load_model, file.path(file_dir, "models"))
+  
+  products <- chunks[[idx]]
+  
+  for (product in products) {
+    
+    history <- read.csv(file.path(file_dir, "data", "large", "history",
+                                  paste0(product, ".csv"))) %>%
+      filter(week >= forecast_start_week - NLAGS)
+    
+    futurex <- read.csv(file.path(file_dir, "data", "large", "futurex",
+                                  paste0(product, ".csv")))
+    
+    features <- bind_rows(futurex, history) 
+    
+    steps <- 1:13
+    
+    forecasts <- lapply(steps, function(step) {
+      
+      step_features <- create_features(features, step = step)
+      step_features$step <- step
+      
+      if (step <= 6) {
+        model <- models[[step]]$model
+      } else {
+        model <- models[[7]]$model
+      }
+      
+      step_features$pred <- predict(model, step_features, n.trees = model$n.trees)
+      step_features
+      
+    })
+    forecasts <- do.call(rbind, forecasts) %>% arrange(product, sku, store, week)
+    write.csv(forecasts, 
+            file.path(file_dir, "data", "large", "forecasts",
+                      paste0(product, ".csv")),
+            quote = FALSE, row.names = FALSE)
+    
+  }
                        
-  segment <- segments[[idx]]
-  store <- segment$store
-  brand <- segment$brand
   
-  dat <- read.csv(file.path(file_dir, "data", paste0(store, "_", brand, ".csv")))
-  dat <- dat %>% filter(week < 118)
-  segment <- df2list(segment, dat)
-  
-  fit <- suppressWarnings(auto.arima(segment$series))
-  pred <- forecast(fit, h = 4)
-  result <- list(store = store, brand = brand, fcast = pred)
-  
-  res <- try(
-    write.csv(data.frame(result$fcast), 
-            file.path(file_dir, "forecasts", paste0(result$store, "_", result$brand, ".csv")),
-            quote = FALSE)
-  )
-  success <- is.null(res)
-  success
+  return(TRUE)
                        
-}
+                     }
+})
