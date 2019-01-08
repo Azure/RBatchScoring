@@ -1,20 +1,20 @@
 # Dockerfile for the scheduler image
 FROM rocker/tidyverse:3.5.1
 
-RUN R -e "devtools::install_github('Azure/rAzureBatch')"
-RUN R -e "devtools::install_github('Azure/doAzureParallel')"
-RUN R -e "install.packages('dotenv')"
-RUN R -e "install.packages('dplyr')"
-RUN R -e "install.packages('jsonlite')"
-RUN R -e "install.packages('dotenv')"
+RUN installGithub.r RcppCor --error Azure/rAzureBatch
+RUN installGithub.r RcppCor --error Azure/doAzureParallel
+#RUN R -e "devtools::install_github('Azure/rAzureBatch')"
+#RUN R -e "devtools::install_github('Azure/doAzureParallel')"
+RUN install2.r --error dotenv \
+  jsonlite \
+#RUN R -e "install.packages('dotenv')"
 
 
 WORKDIR /job
 ADD R /job/R
 ADD R/utilities.R /job/R/utilities.R
 ADD R/create_credentials_json.R /job/R/create_credentials_json.R
-ADD R/create_cluster_config.R /job/R/create_cluster_config.R
+ADD R/create_cluster_json.R /job/R/create_cluster_json.R
 ADD R/run_job.R /job/run_job.R
-ADD lookup.csv /job/lookup.csv
 
 CMD ["Rscript", "run_job.R"]

@@ -1,8 +1,8 @@
 ######################
 
 # Enter resource names
-SCHEDULER_CONTAINER_IMAGE <- ""
-ACI_NAME <- ""
+SCHEDULER_CONTAINER_IMAGE <- "angusrtaylor/bfscheduler"
+ACI_NAME <- "bfaci"
 
 ######################
 
