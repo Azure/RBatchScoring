@@ -326,3 +326,10 @@ save_model <- function(m) {
 lapply(time_step_models, save_model)
 
 save_model(time_step_models[[1]])
+
+
+# Use Az Copy to upload model files to file share
+
+run("azcopy --source %s --destination %s --dest-key %s --quiet --recursive", "models",
+    paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
+    Sys.getenv("STORAGE_ACCOUNT_KEY"))
