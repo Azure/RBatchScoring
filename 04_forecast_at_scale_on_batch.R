@@ -6,13 +6,6 @@ library(doAzureParallel)
 source("R/utilities.R")
 
 
-# Build and upload the worker docker image to docker hub
-
-run("docker build -t %s -f docker/worker/dockerfile .", Sys.getenv("WORKER_CONTAINER_IMAGE"))
-run("docker tag %s:latest %s", Sys.getenv("WORKER_CONTAINER_IMAGE"), Sys.getenv("WORKER_CONTAINER_IMAGE"))
-run("docker push %s", Sys.getenv("WORKER_CONTAINER_IMAGE"))
-
-
 # Register batch pool
 
 setCredentials("azure/credentials.json")

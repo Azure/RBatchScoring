@@ -1,9 +1,3 @@
-#NEW PROCESS:
-#01_deploy_azure_resoures (with create file share and directories)
-#02_extract_explore_expand_data (with doAzureParallel)
-
-
-
 ######################
 
 # Enter resource names
@@ -75,69 +69,21 @@ setenv("STORAGE_ACCOUNT_KEY",
          )$list_keys()[[1]]
        )
 
-#setenv("REGION", unlist(strsplit(credentials$batchAccount$url, "\\."))[2])
-#setenv("STORAGE_ACCOUNT_NAME", credentials$storageAccount$name)
-#setenv("STORAGE_ACCOUNT_KEY", credentials$storageAccount$key)
-#setenv("STORAGE_ENDPOINT_SUFFIX", credentials$storageAccount$endpointSuffix)
-#setenv("BATCH_ACCOUNT_URL", credentials$batchAccount$url)
-#setenv("BATCH_ACCOUNT_NAME", credentials$batchAccount$name)
-#setenv("BATCH_ACCOUNT_KEY", credentials$batchAccount$key)
-
 
 # Create file share and directory structure
 
 create_file_share(Sys.getenv("FILE_SHARE_URL"),
                   key = Sys.getenv("STORAGE_ACCOUNT_KEY"))
 
-#run("az storage share create -n %s --account-name %s",
-#    Sys.getenv("FILE_SHARE_NAME"),
-#    Sys.getenv("STORAGE_ACCOUNT_NAME")
-#)
-
 fs <- file_share(Sys.getenv("FILE_SHARE_URL"),
                          key = Sys.getenv("STORAGE_ACCOUNT_KEY"))
+create_azure_dir(fs, "models")
 create_azure_dir(fs, "data")
 create_azure_dir(fs, file.path("data", "small"))
 create_azure_dir(fs, file.path("data", "large"))
 create_azure_dir(fs, file.path("data", "large", "futurex"))
 create_azure_dir(fs, file.path("data", "large", "history"))
 create_azure_dir(fs, file.path("data", "large", "forecasts"))
-
-# files <- c(
-#   list.files(file.path("data", "scoring", "futurex"), full.names = TRUE),
-#   list.files(file.path("data", "scoring", "history"), full.names = TRUE)
-# )
-# system.time({
-#   lapply(files, function(f)
-#          upload_to_url(
-#            f,
-#            file.path(Sys.getenv("FILE_SHARE_URL"), f),
-#            key = Sys.getenv("STORAGE_ACCOUNT_KEY")
-#          ))
-# })
-
-# Upload data files to file share
-
-# run("azcopy --source %s --destination %s --dest-key %s --recursive",
-#     "data/history",
-#     paste0(Sys.getenv("FILE_SHARE_URL"), "data/history"),
-#     Sys.getenv("STORAGE_ACCOUNT_KEY")
-# )
-# 
-# run("azcopy --source %s --destination %s --dest-key %s --recursive",
-#     "data/futurex",
-#     paste0(Sys.getenv("FILE_SHARE_URL"), "data/futurex"),
-#     Sys.getenv("STORAGE_ACCOUNT_KEY")
-# )
-
-
-# Create a directory to store forecasts
-
-# run("az storage directory create --account-name %s --account-key %s --share-name %s --name forecasts",
-#     Sys.getenv("STORAGE_ACCOUNT_NAME"),
-#     Sys.getenv("STORAGE_ACCOUNT_KEY"),
-#     Sys.getenv("FILE_SHARE_NAME")
-# )
 
 
 # Set doAzureParallel credentials

@@ -7,22 +7,23 @@ library(caret)
 source("R/utilities.R")
 
 setCredentials("azure/credentials.json")
-clust <- makeCluster("experimentation/cluster.json")
+clust <- makeCluster("azure/cluster.json")
 registerDoAzureParallel(clust)
 getDoParWorkers()
-setAutoDeleteJob(FALSE)
+
 
 pkgs_to_load <- c("dplyr", "caret")
 
-lookup <- read.csv("lookup.csv")
-segments <- split(lookup, seq(nrow(lookup)))
+files <- lapply(list.files("data", full.names = TRUE), read.csv)
+dat <- do.call("rbind", files)
 
-dat <- read_all_data(".")
+dat$logsales <- log(dat$sales)
+dat$sales <- NULL
 
 # create lagged features
 
 dat <- dat %>%
-  group_by(store, brand) %>%
+  group_by(product, sku, store) %>%
   mutate(
     lag1 = lag(logsales),
     lag2 = lag(logsales, n = 2),
@@ -47,7 +48,9 @@ idx <- list(as.integer(row.names(train[train$week < valid_start, ])))
 idxOut <- list(as.integer(row.names(train[train$week >= valid_start, ])))
 
 test <- dat %>% filter(week > test_start)
+train$product <- NULL
 train$week <- NULL
+test$product <- NULL
 test$week <- NULL
 
 fitControl <- trainControl(
@@ -59,10 +62,10 @@ fitControl <- trainControl(
   )
 
 gbmGrid <-  expand.grid(
-  interaction.depth = c(1, 3, 5, 9, 15, 20),
+  interaction.depth = c(5, 10, 15, 20),
   n.trees = seq(100, 2000, 200),
   shrinkage = c(0.005, 0.01, 0.05, 0.1),
-  n.minobsinnode = c(10, 20, 30)
+  n.minobsinnode = c(10)
 )
 
 gbmFit <- train(logsales ~ ., data = train, 
@@ -77,6 +80,8 @@ param_results <- gbmFit$results
 param_results <- param_results %>% arrange(RMSE)
 
 gbmFit$bestTune
+# n.trees interaction.depth shrinkage n.minobsinnode
+# 110    1900                15      0.05             10
 
 gbmModel <- gbmFit$finalModel
 gbmModel$data <- NULL
@@ -86,7 +91,7 @@ saveRDS(gbmModel, file = "gbm")
 #gbmModel <- readRDS(file = "gbm")
 
 test$pred <- predict(gbmModel, test, n.trees = gbmModel$n.trees)
-mean(abs(exp(test$pred) - exp(test$logsales)) / exp(test$logsales))
+mean(abs(exp(test$pred) - exp(test$logsales)) / exp(test$logsales)) # 0.4
 
 varImp(gbmFit)
 

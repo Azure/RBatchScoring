@@ -3,12 +3,19 @@ library(dotenv)
 library(dplyr)
 library(gbm)
 library(tidyr)
+library(ggplot2)
 library(AzureRMR)
 library(AzureStor)
 library(doAzureParallel)
 
 source("R/utilities.R")
 source("R/options.R")
+
+
+# Extract data and download models ----------------------------------------
+
+# Extract data from bayesm package
+
 source("R/get_data.R")
 
 
@@ -25,6 +32,39 @@ lapply(1:11, function(x) {
              )
 })
 
+
+# Download pre-trained forecasting models from blob storage
+
+if (!dir.exists("models")) dir.create("models")
+
+model_names <- expand.grid(1:7, c(0.5)) # c(0.05, 0.25, 0.5, 0.75, 0.95)
+colnames(model_names) <- c("step", "quantile")
+model_names$names <- paste0(
+  "gbm_t", as.character(model_names$step),
+  "_q",as.character(model_names$quantile * 100))
+model_names <- model_names$names
+
+download_model <- function(name) {
+  download_from_url(
+    file.path("https://batchforecastingpublic.blob.core.windows.net/batchforecastingpublic",
+              name),
+    file.path("models", name),
+    overwrite = TRUE
+  )
+}
+
+lapply(model_names, download_model)
+
+
+# Use Az Copy to upload model files to file share
+
+run("azcopy --source %s --destination %s --dest-key %s --quiet --recursive", "models",
+    paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
+    Sys.getenv("STORAGE_ACCOUNT_KEY"))
+
+
+
+# Expand data on Batch ----------------------------------------------------
 
 # Register batch pool
 
@@ -44,7 +84,7 @@ file_dir <- "/mnt/batch/tasks/shared/files"
 pkgs_to_load <- c("dplyr")
 
 
-# Replicate brands to ~40,000 skus
+# Replicate skus to ~40,000
 multiplier <- floor(40000 / length(unique(dat$product)))
 
 #chunksize <- ceiling(multiplier / as.integer(Sys.getenv("NUM_NODES")))
@@ -105,8 +145,95 @@ results <- foreach(chunk_idx=1:num_nodes,
 }
 
 
-# Generate forecasts for all SKUs of one product. First read in recent history
-# sales history in order to generate lagged features
+
+# Explore data ------------------------------------------------------------
+
+
+dat <- load_data("data")
+
+dat %>%
+  #mutate(sales = log(sales)) %>%
+  group_by(week) %>%
+  summarise(total_sales = sum(sales)) %>%
+  ungroup() %>%
+  ggplot(aes(x = week, y = total_sales)) +
+  geom_line()
+
+# dat %>%
+#   mutate(sales = log(sales)) %>%
+#   group_by(product, sku, week) %>%
+#   summarise(sales = sum(sales)) %>%
+#   ungroup() %>%
+#   mutate(sku = as.factor(sku)) %>%
+#   ggplot(aes(x = week, y = sales, colour = sku)) +
+#   geom_line()
+# 
+# dat %>%
+#   mutate(sales = log(sales)) %>%
+#   group_by(product, store, week) %>%
+#   summarise(sales = sum(sales)) %>%
+#   ungroup() %>%
+#   mutate(store = as.factor(store)) %>%
+#   ggplot(aes(x = week, y = sales, colour = store)) +
+#   geom_line()
+
+
+
+# Generate a forecast -----------------------------------------------------
+
+# Generate a forecast for one product
+
+forecast_start <- max(dat$week) - FORECAST_HORIZON
+
+create_features <- function(dat, step = 1) {
+  dat %>%
+    arrange(sku, store, week) %>%
+    group_by(product, sku, store) %>%
+    mutate(
+      sales = log(sales),
+      lag1 = lag(sales, n = 1 + step - 1),
+      lag2 = lag(sales, n = 2 + step - 1),
+      lag3 = lag(sales, n = 3 + step - 1),
+      lag4 = lag(sales, n = 4 + step - 1),
+      lag5 = lag(sales, n = 5 + step - 1),
+      month_mean = (lag1 + lag2 + lag3 + lag4 + lag5) / 5,
+      month_max = max(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE),
+      month_min = min(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE)
+    ) %>%
+    ungroup() %>%
+    filter(complete.cases(.)) %>%
+    group_by(product, sku, store) %>%
+    mutate(level = cummean(lag1)) %>%
+    ungroup() %>%
+    select(-c(lag2, lag3, lag4, lag5))
+}
+
+
+dat_product1 <- dat %>%
+  filter(product == 1)
+
+load_model <- function(name, path) {
+  list(name = name, model = readRDS(file.path(path, name)))
+}
+
+models <- lapply(model_names, load_model, "models")
+
+scored_dfs <- list()
+
+for (step in 1:FORECAST_HORIZON) {
+  score_dat <- create_features(dat_product1, step = step) %>%
+    filter(week == forecast_start + step - 1)
+  
+  if (step <= 6) {
+    model <- models[[step]]$model
+  } else {
+    model <- models[[7]]$model
+  }
+  score_dat$pred <- predict(model, score_dat, n.trees = model$n.trees)
+  scored_dfs[[step]] <- score_dat
+}
+
+results <- do.call(rbind, scored_dfs)
 
 # recent_history <- read.csv(file.path("data", "history", "1.csv"))
 #

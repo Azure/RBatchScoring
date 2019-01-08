@@ -1,3 +1,8 @@
+load_data <- function(path = ".") {
+  files <- lapply(list.files(path, full.names = TRUE), read.csv)
+  dat <- do.call("rbind", files)
+}
+
 
 setenv <- function(name, value) {
   
