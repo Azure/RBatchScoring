@@ -1,6 +1,7 @@
-generate_forecast <- function(product, models) {
+generate_forecast <- function(product, models, transform_predictions = TRUE) {
   
   source("R/options.R")
+  
   
   # Read product sales history
   
@@ -8,6 +9,7 @@ generate_forecast <- function(product, models) {
       file.path(file_dir, "data", "history", paste0(product, ".csv"))
     ) %>%
     select(product, sku, store, week, sales)
+  
   
   # Retain only the data needed to compute lagged features
   
@@ -35,9 +37,14 @@ generate_forecast <- function(product, models) {
       "_q", as.character(100 * q)
     )
     model <- models[[model_name]]$model
-    predict(model, dat, n.trees = model$n.trees)
+    pred <- predict(model, dat, n.trees = model$n.trees)
+    
+    if (transform_predictions) pred <- exp(pred)
+    
+    pred
     
   }
+  
   
   generate_step_forecasts <- function(step) {
     
@@ -54,12 +61,11 @@ generate_forecast <- function(product, models) {
     )
     
     quantile_forecasts <- as.data.frame(quantile_forecasts)
+    colnames(quantile_forecasts) <-  paste0("q", as.character(QUANTILES * 100))
     
     # Sort to avoid crossing quantiles
     
-    quantile_forecasts <- t(apply(quantile_forecasts, 1, sort))
-    
-    names(quantile_forecasts) <-  as.character(QUANTILES * 100)
+    t(apply(quantile_forecasts, 1, sort))
     
     cbind(step_features, quantile_forecasts)
     

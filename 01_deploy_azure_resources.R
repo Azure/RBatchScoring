@@ -18,8 +18,7 @@ VM_SIZE <- "Standard_DS2_v2"
 NUM_NODES <- "10"
 
 
-# Set environment variables -----------------------------------------------
-
+# Set environment variables ----------------------------------------------------
 
 library(jsonlite)
 library(doAzureParallel)
@@ -78,13 +77,12 @@ setenv("FILE_SHARE_URL",
 # Get env variables from resource group / storage account
 
 az <- az_rm$new(
-  tenant=Sys.getenv("TENANT_ID"),
-  app=Sys.getenv("SP_NAME"),
-  password=Sys.getenv("SP_PASSWORD")
+  tenant = Sys.getenv("TENANT_ID"),
+  app = Sys.getenv("SP_NAME"),
+  password = Sys.getenv("SP_PASSWORD")
 )
 
 az_sub <- az$get_subscription(Sys.getenv("SUBSCRIPTION_ID"))
-
 rg <- az_sub$get_resource_group(Sys.getenv("RESOURCE_GROUP"))
 
 setenv("REGION", rg$location)
@@ -94,7 +92,7 @@ setenv(
 )
 
 
-# Create file share and directory structure -------------------------------
+# Create file share and directory structure ------------------------------------
 
 create_file_share(
   Sys.getenv("FILE_SHARE_URL"),
@@ -105,6 +103,7 @@ fs <- file_share(
   Sys.getenv("FILE_SHARE_URL"),
   key = Sys.getenv("STORAGE_ACCOUNT_KEY")
 )
+
 create_azure_dir(fs, "models")
 create_azure_dir(fs, "data")
 create_azure_dir(fs, file.path("data", "futurex"))
@@ -140,7 +139,7 @@ run(
 )
 
 
-# Build worker docker image -----------------------------------------------
+# Build worker docker image ----------------------------------------------------
 
 # Build and upload the worker docker image to docker hub. Review the dockerfile
 # in docker/worker/dockerfile
@@ -149,15 +148,17 @@ run(
   "docker build -t %s -f docker/worker/dockerfile .",
   Sys.getenv("WORKER_CONTAINER_IMAGE")
 )
+
 run(
   "docker tag %s:latest %s",
   Sys.getenv("WORKER_CONTAINER_IMAGE"),
   Sys.getenv("WORKER_CONTAINER_IMAGE")
 )
+
 run("docker push %s", Sys.getenv("WORKER_CONTAINER_IMAGE"))
 
 
-# Provision cluster -------------------------------------------------------
+# Provision cluster ------------------------------------------------------------
 
 # Set doAzureParallel credentials
 
@@ -165,6 +166,48 @@ doAzureParallel::setCredentials("azure/credentials.json")
 
 
 # Create the cluster config file and provision the cluster
+
+create_cluster_json <- function(save_dir) {
+  
+  mount_str <- paste(
+    "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/files",
+    "-o vers=3.0,username=%s,password=%s,dir_mode=0777,file_mode=0777,sec=ntlmssp"
+  )
+  mount_cmd <- sprintf(
+    mount_str,
+    Sys.getenv("STORAGE_ACCOUNT_NAME"),
+    Sys.getenv("FILE_SHARE_NAME"),
+    Sys.getenv("STORAGE_ACCOUNT_NAME"),
+    Sys.getenv("STORAGE_ACCOUNT_KEY")
+  )
+  cmd_line <- c("mkdir /mnt/batch/tasks/shared/files", mount_cmd)
+  
+  config <- list(
+    name = Sys.getenv("CLUSTER_NAME"),
+    vmSize = Sys.getenv("VM_SIZE"),
+    maxTasksPerNode = 1,
+    poolSize = list(
+      dedicatedNodes = list(
+        min = as.integer(Sys.getenv("NUM_NODES")),
+        max = as.integer(Sys.getenv("NUM_NODES"))
+      ),
+      lowPriorityNodes = list(
+        min = 0,
+        max = 0
+      ),
+      autoscaleFormula = "QUEUE_AND_RUNNING"
+    ),
+    containerImage = Sys.getenv("WORKER_CONTAINER_IMAGE"),
+    commandLine = cmd_line
+  )
+  
+  config_json <- toJSON(config, auto_unbox = TRUE, pretty = TRUE)
+  
+  write(config_json, file = file.path(save_dir, "cluster.json"))
+  
+}
+
+write_function(create_cluster_json, "R/create_cluster_json.R")
 
 create_cluster_json(save_dir = "azure")
 cluster <- makeCluster("azure/cluster.json")

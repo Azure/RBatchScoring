@@ -79,3 +79,16 @@ write_function <- function(fn, file) {
 load_model <- function(name, path) {
   list(name = name, model = readRDS(file.path(path, name)))
 }
+
+
+load_models <- function() {
+  
+  model_names <-list_model_names(
+    list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
+  )
+  
+  models <- lapply(model_names, load_model, "models")
+  names(models) <- model_names
+  models
+  
+}

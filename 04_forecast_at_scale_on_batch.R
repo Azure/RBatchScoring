@@ -52,10 +52,6 @@ azure_options <- list(
   autoDeleteJob = FALSE
 )
 
-load_model <- function(name, path) {
-  list(name = name, model = readRDS(file.path(path, name)))
-}
-
 
 # Generate forecasts
 

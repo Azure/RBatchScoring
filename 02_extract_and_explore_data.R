@@ -35,6 +35,10 @@ setCredentials("azure/credentials.json")
 clust <- makeCluster("azure/cluster.json")
 registerDoAzureParallel(clust)
 getDoParWorkers()
+azure_options <- list(
+  enableCloudCombine = TRUE,
+  autoDeleteJob = FALSE
+)
 
 
 # Tell nodes the mount location for the file share
@@ -50,11 +54,6 @@ pkgs_to_load <- c("dplyr")
 # Factor by which to replicate products
 
 multiplier <- floor(TARGET_SKUS / length(unique(futurex$sku)))
-
-azure_options <- list(
-  enableCloudCombine = TRUE,
-  autoDeleteJob = FALSE
-)
 
 
 # Split data replication operation equally across nodes
@@ -106,7 +105,6 @@ results <- foreach(
 
 
 # Explore data -----------------------------------------------------------------
-
 
 dat <- load_data(file.path("data", "history"))
 
@@ -174,12 +172,14 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
   
   source("R/options.R")
   
+  
   # Read product sales history
   
   history <- read.csv(
       file.path(file_dir, "data", "history", paste0(product, ".csv"))
     ) %>%
     select(product, sku, store, week, sales)
+  
   
   # Retain only the data needed to compute lagged features
   
@@ -214,6 +214,7 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
     pred
     
   }
+  
   
   generate_step_forecasts <- function(step) {
     
