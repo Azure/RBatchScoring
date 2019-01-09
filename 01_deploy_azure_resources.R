@@ -112,6 +112,34 @@ create_azure_dir(fs, file.path("data", "history"))
 create_azure_dir(fs, file.path("data", "forecasts"))
 
 
+# Retrieve pre-trained forecasting models --------------------------------------
+
+# Download from blob storage
+
+create_dir("models")
+
+run(
+  "azcopy --source %s --destination %s --quiet --recursive",
+  file.path(
+    "https://happypathspublic.blob.core.windows.net",
+    "assets",
+    "batch_forecasting"
+  ),
+  "models"
+)
+
+run("ls models")
+
+# Transfer models to file share
+
+run(
+  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
+  "models",
+  paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
+  Sys.getenv("STORAGE_ACCOUNT_KEY")
+)
+
+
 # Build worker docker image -----------------------------------------------
 
 # Build and upload the worker docker image to docker hub. Review the dockerfile
