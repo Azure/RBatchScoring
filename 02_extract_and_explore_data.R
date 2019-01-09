@@ -1,8 +1,16 @@
 
+# 02_extract_and_explore_data.R
+# 
+# This script extracts the Orange Juice dataset from the bayesm package. The
+# dataset consists of weekly sales for 11 SKUs of orange juice products across
+# 83 stores. This script replicates these data to expand the number of products.
+# The script also provides some exploration of the original dataset and
+# generates a forecast using a set of pre-trained models.
+
+
 library(dotenv)
 library(dplyr)
 library(gbm)
-library(tidyr)
 library(ggplot2)
 library(AzureRMR)
 library(AzureStor)
@@ -12,56 +20,11 @@ source("R/utilities.R")
 source("R/options.R")
 
 
-# Extract data and download models ----------------------------------------
+# Extract data -----------------------------------------------------------------
 
-# Extract data from bayesm package
+# Extract and preprocess data from bayesm package
 
 source("R/get_data.R")
-
-
-# Upload small datasets to file share
-
-fs <- file_share(Sys.getenv("FILE_SHARE_URL"),
-                 key = Sys.getenv("STORAGE_ACCOUNT_KEY"))
-
-lapply(1:11, function(x) {
-  fname <- paste0("product_", x, ".csv")
-  upload_to_url(file.path("data", fname),
-               file.path(Sys.getenv("FILE_SHARE_URL"), "data", "small", fname),
-               key = Sys.getenv("STORAGE_ACCOUNT_KEY")
-             )
-})
-
-
-# Download pre-trained forecasting models from blob storage
-
-if (!dir.exists("models")) dir.create("models")
-
-model_names <- expand.grid(1:7, c(0.5)) # c(0.05, 0.25, 0.5, 0.75, 0.95)
-colnames(model_names) <- c("step", "quantile")
-model_names$names <- paste0(
-  "gbm_t", as.character(model_names$step),
-  "_q",as.character(model_names$quantile * 100))
-model_names <- model_names$names
-
-download_model <- function(name) {
-  download_from_url(
-    file.path("https://batchforecastingpublic.blob.core.windows.net/batchforecastingpublic",
-              name),
-    file.path("models", name),
-    overwrite = TRUE
-  )
-}
-
-lapply(model_names, download_model)
-
-
-# Use Az Copy to upload model files to file share
-
-run("azcopy --source %s --destination %s --dest-key %s --quiet --recursive", "models",
-    paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
-    Sys.getenv("STORAGE_ACCOUNT_KEY"))
-
 
 
 # Expand data on Batch ----------------------------------------------------
@@ -74,7 +37,7 @@ registerDoAzureParallel(clust)
 getDoParWorkers()
 
 
-# Tell nodes the mount location for data and forecasts directories
+# Tell nodes the mount location for the file share
 
 file_dir <- "/mnt/batch/tasks/shared/files"
 
@@ -84,198 +47,219 @@ file_dir <- "/mnt/batch/tasks/shared/files"
 pkgs_to_load <- c("dplyr")
 
 
-# Replicate skus to ~40,000
-multiplier <- floor(40000 / length(unique(dat$product)))
+# Factor by which to replicate products
 
-#chunksize <- ceiling(multiplier / as.integer(Sys.getenv("NUM_NODES")))
+multiplier <- floor(TARGET_SKUS / length(unique(futurex$sku)))
 
 azure_options <- list(
-  chunksize = 1,
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE
 )
 
-num_nodes <- as.numeric(Sys.getenv("NUM_NODES"))
-reps <- rep(1:num_nodes, each=multiplier/num_nodes)
-reps <- c(reps, rep(max(reps), multiplier - length(reps)))
-chunks <- split(1:multiplier, reps)
 
-results <- foreach(chunk_idx=1:num_nodes,
-                  .options.azure = azure_options,
-                  .packages = pkgs_to_load) %dopar% {
-                    
-  # Read small data
+# Split data replication operation equally across nodes
+
+chunks <- chunk_by_nodes(multiplier)
+
+
+# Only replicate sales value history (discard other features)
+
+sales_history <- history %>% select(product, sku, store, week, sales)
+
+
+# Replicate data
+
+results <- foreach(
   
-  files <- lapply(list.files(file.path(file_dir, "data", "small"), full.names = TRUE), read.csv)
-  dat <- do.call("rbind", files)
+  idx=1:length(chunks),
+  .options.azure = azure_options,
+  .packages = pkgs_to_load,
+  .noexport = c("history")
   
-  max_week <- max(dat$week)
-  
-  
-  # Expand data by replicating product data
-  
-  idx_list <- chunks[[chunk_idx]]
-  
-  lapply(idx_list, function(idx) {
+  ) %dopar% {
     
-    history <- dat %>%
-            filter(week <= max_week - FORECAST_HORIZON) %>%
-            select(product, sku, store, week, sales) %>%
-            mutate(product = idx)
+    products <- chunks[[idx]]
     
-    futurex <- dat %>%
-          filter(week > max_week - FORECAST_HORIZON) %>%
-          select(-sales) %>%
-          mutate(product = idx)
+    lapply(products, function(product) {
+      
+      sales_history %>%
+        mutate(product = product) %>%
+        write.csv(
+          file.path(file_dir, "data", "history",
+                    paste0(product, ".csv")),
+          quote = FALSE, row.names = FALSE
+        )
+      
+      futurex %>%
+        mutate(product = product) %>%
+        write.csv(
+          file.path(file_dir, "data", "futurex",
+                    paste0(product, ".csv")),
+          quote = FALSE, row.names = FALSE
+        )
+      
+    })
     
-    write.csv(history,
-              file.path(file_dir, "data", "large", "history",
-                        paste0(idx, ".csv")),
-              quote = FALSE, row.names = FALSE)
+    TRUE
     
-    write.csv(futurex,
-              file.path(file_dir, "data", "large", "futurex",
-                        paste0(idx, ".csv")),
-              quote = FALSE, row.names = FALSE)
-    
-  })
-  
-  return(TRUE)
-                    
 }
 
 
+# Explore data -----------------------------------------------------------------
 
-# Explore data ------------------------------------------------------------
+
+dat <- load_data(file.path("data", "history"))
 
 
-dat <- load_data("data")
+# Plot total sales
 
 dat %>%
-  #mutate(sales = log(sales)) %>%
   group_by(week) %>%
   summarise(total_sales = sum(sales)) %>%
   ungroup() %>%
   ggplot(aes(x = week, y = total_sales)) +
   geom_line()
 
-# dat %>%
-#   mutate(sales = log(sales)) %>%
-#   group_by(product, sku, week) %>%
-#   summarise(sales = sum(sales)) %>%
-#   ungroup() %>%
-#   mutate(sku = as.factor(sku)) %>%
-#   ggplot(aes(x = week, y = sales, colour = sku)) +
-#   geom_line()
-# 
-# dat %>%
-#   mutate(sales = log(sales)) %>%
-#   group_by(product, store, week) %>%
-#   summarise(sales = sum(sales)) %>%
-#   ungroup() %>%
-#   mutate(store = as.factor(store)) %>%
-#   ggplot(aes(x = week, y = sales, colour = store)) +
-#   geom_line()
+
+# Plot log sales of 5 SKUs
+
+dat %>%
+  filter(sku %in% 1:5) %>%
+  mutate(sales = log(sales)) %>%
+  group_by(product, sku, week) %>%
+  summarise(sales = sum(sales)) %>%
+  ungroup() %>%
+  mutate(sku = as.factor(sku)) %>%
+  ggplot(aes(x = week, y = sales, colour = sku)) +
+  geom_line()
 
 
+# Plot log of total sales in 5 stores
 
-# Generate a forecast -----------------------------------------------------
-
-# Generate a forecast for one product
-
-forecast_start <- max(dat$week) - FORECAST_HORIZON
-
-create_features <- function(dat, step = 1) {
-  dat %>%
-    arrange(sku, store, week) %>%
-    group_by(product, sku, store) %>%
-    mutate(
-      sales = log(sales),
-      lag1 = lag(sales, n = 1 + step - 1),
-      lag2 = lag(sales, n = 2 + step - 1),
-      lag3 = lag(sales, n = 3 + step - 1),
-      lag4 = lag(sales, n = 4 + step - 1),
-      lag5 = lag(sales, n = 5 + step - 1),
-      month_mean = (lag1 + lag2 + lag3 + lag4 + lag5) / 5,
-      month_max = max(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE),
-      month_min = min(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE)
-    ) %>%
-    ungroup() %>%
-    filter(complete.cases(.)) %>%
-    group_by(product, sku, store) %>%
-    mutate(level = cummean(lag1)) %>%
-    ungroup() %>%
-    select(-c(lag2, lag3, lag4, lag5))
-}
+dat %>%
+  filter(store %in% 1:5) %>%
+  mutate(sales = log(sales)) %>%
+  group_by(product, store, week) %>%
+  summarise(sales = sum(sales)) %>%
+  ungroup() %>%
+  mutate(store = as.factor(store)) %>%
+  ggplot(aes(x = week, y = sales, colour = store)) +
+  geom_line()
 
 
-dat_product1 <- dat %>%
-  filter(product == 1)
+# Generate a forecast ----------------------------------------------------------
 
-load_model <- function(name, path) {
-  list(name = name, model = readRDS(file.path(path, name)))
-}
+# Generate a forecast for all 11 SKUs of one product
 
-models <- lapply(model_names, load_model, "models")
+file_dir <- "."
 
-scored_dfs <- list()
 
-for (step in 1:FORECAST_HORIZON) {
-  score_dat <- create_features(dat_product1, step = step) %>%
-    filter(week == forecast_start + step - 1)
+# Load trained models
+
+load_models <- function() {
   
-  if (step <= 6) {
-    model <- models[[step]]$model
-  } else {
-    model <- models[[7]]$model
-  }
-  score_dat$pred <- predict(model, score_dat, n.trees = model$n.trees)
-  scored_dfs[[step]] <- score_dat
+  model_names <-list_model_names(
+    list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
+  )
+  
+  models <- lapply(model_names, load_model, "models")
+  names(models) <- model_names
+  models
+  
 }
 
-results <- do.call(rbind, scored_dfs)
+load_models <- load_models()
 
-# recent_history <- read.csv(file.path("data", "history", "1.csv"))
-#
-# lag_var_names <- paste0("lag", 1:8)
-#
-# recent_history <- recent_history %>%
-#   arrange(product, sku, store, desc(week)) %>%
-#   mutate(var = rep(lag_var_names, nrow(.) / 8)) %>%
-#   select(-week) %>%
-#   spread(var, logsales)
-#
-#
-# # Now read in regressors for the future forecast period
-#
-# futurex <- read.csv(file.path("data", "futurex", "1.csv")) %>%
-#   arrange(product, sku, store, week)
-#
-#
-# # Load trained gbm model
-#
-# gbmModel <- readRDS(file = "gbm")
-#
-# forecasts <- list()
-#
-# first_week <- min(futurex$week)
-# score_weeks <- first_week:(first_week+3)
-#
-# # Recursively score future weeks and update lagged features
-#
-# for (i in 1:4) {
-#
-#   score_week <- score_weeks[i]
-#
-#   dat_score <- futurex %>% filter(week == score_week)
-#
-#   dat_score$pred <- predict(gbmModel, dat_score, n.trees = gbmModel$n.trees)
-#
-#   forecasts[[i]] <- dat_score
-#
-#   recent_history[ , paste0("lag", 2:8)] <- recent_history[ , paste0("lag", 1:7)]
-#   recent_history$lag1 <- dat_score$pred
-#
-# }
-#
-# forecasts <- do.call(rbind, forecasts)
+generate_forecast <- function(product, models, transform_predictions = TRUE) {
+  
+  source("R/options.R")
+  
+  # Read product sales history
+  
+  history <- read.csv(
+      file.path(file_dir, "data", "history", paste0(product, ".csv"))
+    ) %>%
+    select(product, sku, store, week, sales)
+  
+  # Retain only the data needed to compute lagged features
+  
+  forecast_start_week <- max(history$week) + 1
+  history <- history %>% filter(week >= forecast_start_week - NLAGS)
+  
+  
+  # Read features for future time steps
+  
+  futurex <- read.csv(
+      file.path(file_dir, "data", "futurex", paste0(product, ".csv"))
+    )
+  
+  features <- bind_rows(futurex, history) 
+  
+  
+  # Generate forecasts over the 13 steps of the forecast period
+  
+  steps <- 1:FORECAST_HORIZON
+  
+  generate_quantile_forecast <- function(q, model_idx, dat) {
+    
+    model_name <- paste0(
+      "gbm_t", as.character(model_idx),
+      "_q", as.character(100 * q)
+    )
+    model <- models[[model_name]]$model
+    pred <- predict(model, dat, n.trees = model$n.trees)
+    
+    if (transform_predictions) pred <- exp(pred)
+    
+    pred
+    
+  }
+  
+  generate_step_forecasts <- function(step) {
+    
+    step_features <- create_features(features, step = step, remove_target = TRUE)
+    step_features$step <- step
+    
+    if (step <= 6) model_idx <- step else model_idx <- 7
+    
+    quantile_forecasts <- lapply(
+      QUANTILES,
+      generate_quantile_forecast,
+      model_idx,
+      step_features
+    )
+    
+    quantile_forecasts <- as.data.frame(quantile_forecasts)
+    colnames(quantile_forecasts) <-  paste0("q", as.character(QUANTILES * 100))
+    
+    # Sort to avoid crossing quantiles
+    
+    t(apply(quantile_forecasts, 1, sort))
+    
+    cbind(step_features, quantile_forecasts)
+    
+  }
+  
+  step_forecasts <- lapply(steps, generate_step_forecasts)
+  
+  do.call(rbind, step_forecasts) %>% arrange(product, sku, store, week)
+
+}
+
+write_function(generate_forecast, "R/generate_forecast.R")
+
+forecasts <- generate_forecast("1", models)
+
+history %>%
+  filter(store == 5, sku == 10) %>%
+  select(week, sales) %>%
+  bind_rows(
+    forecasts %>%
+      filter(sku == 10, store == 5) %>%
+      select(week, q5:q95)
+  ) %>%
+  ggplot(aes(x = week, y = q50)) +
+  geom_line(colour = "red") +
+  geom_linerange(aes(ymin = q25, ymax = q75), colour = "blue", size = 0.5) +
+  geom_linerange(aes(ymin = q5, ymax = q95), colour = "green", size = 0.25) +
+  geom_line(aes(x = week, y = sales))

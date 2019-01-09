@@ -1,6 +1,40 @@
+chunk_by_nodes <- function(multiplier) {
+  
+  num_nodes <- as.numeric(Sys.getenv("NUM_NODES"))
+  reps <- rep(1:num_nodes, each=multiplier/num_nodes)
+  reps <- c(reps, rep(max(reps), multiplier - length(reps)))
+  chunks <- split(1:multiplier, reps)
+  chunks
+  
+}
+
+
+create_dir <- function(path) if (!dir.exists(path)) dir.create(path)
+
+
 load_data <- function(path = ".") {
   files <- lapply(list.files(path, full.names = TRUE), read.csv)
   dat <- do.call("rbind", files)
+}
+
+
+list_required_models <- function(lagged_feature_steps, quantiles) {
+  required_models <- expand.grid(1:(lagged_feature_steps + 1), quantiles)
+  colnames(required_models) <- c("step", "quantile")
+  split(required_models, seq(nrow(required_models)))
+}
+
+
+list_model_names <- function(required_models) {
+  lapply(
+    required_models,
+    function(model) {
+      paste0(
+        "gbm_t", as.character(model$step), "_q",
+        as.character(model$quantile * 100)
+      )
+    }
+  )
 }
 
 
@@ -34,31 +68,14 @@ run <- function(cmd, ..., test = FALSE) {
 }
 
 
-create_features <- function(dat, step = 1, remove_target = TRUE) {
-  lagged_features <- dat %>%
-    arrange(sku, store, week) %>%
-    group_by(product, sku, store) %>%
-    mutate(
-      sales = log(sales),
-      lag1 = lag(sales, n = 1 + step - 1),
-      lag2 = lag(sales, n = 2 + step - 1),
-      lag3 = lag(sales, n = 3 + step - 1),
-      lag4 = lag(sales, n = 4 + step - 1),
-      lag5 = lag(sales, n = 5 + step - 1),
-      month_mean = (lag1 + lag2 + lag3 + lag4 + lag5) / 5,
-      month_max = max(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE),
-      month_min = min(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE)
-    ) %>%
-    ungroup()
-  
-  if (remove_target) {
-    lagged_features$sales <- NULL
-  }
-  
-  lagged_features %>%
-    filter(complete.cases(.)) %>%
-    group_by(product, sku, store) %>%
-    mutate(level = cummean(lag1)) %>%
-    ungroup() %>%
-    select(-c(lag2, lag3, lag4, lag5))
+write_function <- function(fn, file) {
+  fn_name <- deparse(substitute(fn))
+  fn_capture <- capture.output(print(fn))
+  fn_capture[1] <- paste0(fn_name, " <- ", fn_capture[1])
+  writeLines(fn_capture, file)
+}
+
+
+load_model <- function(name, path) {
+  list(name = name, model = readRDS(file.path(path, name)))
 }

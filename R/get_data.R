@@ -154,7 +154,7 @@ write.csv(
 )
 
 write.csv(
-  futurex, file.path("data", "futurex", ".csv"),
+  futurex, file.path("data", "futurex", "1.csv"),
   quote = FALSE, row.names = FALSE
 )
 
