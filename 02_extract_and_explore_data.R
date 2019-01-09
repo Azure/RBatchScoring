@@ -154,19 +154,7 @@ file_dir <- "."
 
 # Load trained models
 
-load_models <- function() {
-  
-  model_names <-list_model_names(
-    list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
-  )
-  
-  models <- lapply(model_names, load_model, "models")
-  names(models) <- model_names
-  models
-  
-}
-
-load_models <- load_models()
+load_models <- load_models(path = "models")
 
 generate_forecast <- function(product, models, transform_predictions = TRUE) {
   
