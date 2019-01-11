@@ -1,13 +1,13 @@
-generate_forecast <- function(product, models, transform_predictions = TRUE) {
-  
-  source("R/options.R")
+generate_forecast <- function(product,
+                              models,
+                              transform_predictions = TRUE) {
   
   
   # Read product sales history
   
   history <- read.csv(
-      file.path(file_dir, "data", "history", paste0(product, ".csv"))
-    ) %>%
+    file.path(file_dir, "data", "history", paste0(product, ".csv"))
+  ) %>%
     select(product, sku, store, week, sales)
   
   
@@ -20,8 +20,8 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
   # Read features for future time steps
   
   futurex <- read.csv(
-      file.path(file_dir, "data", "futurex", paste0(product, ".csv"))
-    )
+    file.path(file_dir, "data", "futurex", paste0(product, ".csv"))
+  )
   
   features <- bind_rows(futurex, history) 
   
@@ -74,5 +74,5 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
   step_forecasts <- lapply(steps, generate_step_forecasts)
   
   do.call(rbind, step_forecasts) %>% arrange(product, sku, store, week)
-
+  
 }

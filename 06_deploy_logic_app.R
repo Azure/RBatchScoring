@@ -1,19 +1,20 @@
-######################
 
-# Enter resource names
-SUBSCRIPTION_ID <- ""
-LOGIC_APP_NAME <- ""
-REGION <- ""
+# 05_deploy_logic_app.R
 
-######################
+# Enter resource settings ------------------------------------------------------
+
+LOGIC_APP_NAME <- "bfla"
+ACI_NAME <- "bfaci"
+
 
 library(dotenv)
 library(jsonlite)
+library(AzureRMR)
 source("R/utilities.R")
 
-setenv("SUBSCRIPTION_ID", SUBSCRIPTION_ID)
 setenv("LOGIC_APP_NAME", LOGIC_APP_NAME)
-setenv("REGION", REGION)
+setenv("ACI_NAME", ACI_NAME)
+
 
 replace_vars <- function(var_name) {
   pattern <- paste0("\\{", var_name, "\\}")
@@ -23,23 +24,7 @@ replace_vars <- function(var_name) {
 file_name <- file.path("azure", "logic_app_template.json")
 logic_app_json <- readChar(file_name, file.info(file_name)$size)
 
-vars <- c("LOGIC_APP_NAME",
-          "SUBSCRIPTION_ID",
-          "RESOURCE_GROUP",
-          "ACI_NAME",
-          "REGION",
-          "BATCH_ACCOUNT_NAME",
-          "BATCH_ACCOUNT_KEY",
-          "BATCH_ACCOUNT_URL",
-          "STORAGE_ACCOUNT_NAME",
-          "STORAGE_ACCOUNT_KEY",
-          "STORAGE_ENDPOINT_SUFFIX",
-          "FILE_SHARE_NAME",
-          "CLUSTER_NAME",
-          "VM_SIZE",
-          "NUM_NODES",
-          "WORKER_CONTAINER_IMAGE",
-          "SCHEDULER_CONTAINER_IMAGE")
+vars <- get_env_var_list()
 
 for (var in vars) {
   logic_app_json <- replace_vars(var)
@@ -47,6 +32,23 @@ for (var in vars) {
 
 write.table(logic_app_json, file.path("azure", "logic_app.json"),
             quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+rg <- az_rm$new(
+    tenant = Sys.getenv("TENANT_ID"),
+    app = Sys.getenv("SP_NAME"),
+    password = Sys.getenv("SP_PASSWORD")
+  )$
+  get_subscription(Sys.getenv("SUBSCRIPTION_ID"))$
+  get_resource_group(Sys.getenv("RESOURCE_GROUP"))
+
+
+rg$deploy_template(
+  name = "bfla",
+  template = file.path("azure/logic_app.json")
+)
+
+tmp <- rg$get_template("bfla")
+tmp$delete(free_resources = TRUE)
 
 run(
   paste("az group deployment create",

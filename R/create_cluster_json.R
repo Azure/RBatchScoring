@@ -1,4 +1,4 @@
-create_cluster_json <- function(save_dir) {
+create_cluster_json <- function(save_dir = "azure") {
   
   mount_str <- paste(
     "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/files",

@@ -149,23 +149,67 @@ dat %>%
 
 # Generate a forecast for all 11 SKUs of one product
 
+
+# Direct to local data directory
+
 file_dir <- "."
 
 
 # Load trained models
 
-load_models <- load_models(path = "models")
+models <- load_models(path = "models")
 
-generate_forecast <- function(product, models, transform_predictions = TRUE) {
+
+# Define function for feature engineering
+
+create_features <- function(dat, step = 1, remove_target = TRUE) {
   
-  source("R/options.R")
+  lagged_features <- dat %>%
+    arrange(sku, store, week) %>%
+    group_by(product, sku, store) %>%
+    mutate(
+      sales = log(sales),
+      lag1 = lag(sales, n = 1 + step - 1),
+      lag2 = lag(sales, n = 2 + step - 1),
+      lag3 = lag(sales, n = 3 + step - 1),
+      lag4 = lag(sales, n = 4 + step - 1),
+      lag5 = lag(sales, n = 5 + step - 1),
+      month_mean = (lag1 + lag2 + lag3 + lag4 + lag5) / 5,
+      month_max = max(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE),
+      month_min = min(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE)
+    ) %>%
+    ungroup()
+  
+  if (remove_target) {
+    lagged_features$sales <- NULL
+  }
+  
+  lagged_features %>%
+    filter(complete.cases(.)) %>%
+    group_by(product, sku, store) %>%
+    mutate(level = cummean(lag1)) %>%
+    ungroup() %>%
+    select(-c(lag2, lag3, lag4, lag5))
+  
+}
+
+
+# Write function definition to file
+
+write_function(create_features, "R/create_features.R")
+
+# Define forecast scoring function
+
+generate_forecast <- function(product,
+                              models,
+                              transform_predictions = TRUE) {
   
   
   # Read product sales history
   
   history <- read.csv(
-      file.path(file_dir, "data", "history", paste0(product, ".csv"))
-    ) %>%
+    file.path(file_dir, "data", "history", paste0(product, ".csv"))
+  ) %>%
     select(product, sku, store, week, sales)
   
   
@@ -178,8 +222,8 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
   # Read features for future time steps
   
   futurex <- read.csv(
-      file.path(file_dir, "data", "futurex", paste0(product, ".csv"))
-    )
+    file.path(file_dir, "data", "futurex", paste0(product, ".csv"))
+  )
   
   features <- bind_rows(futurex, history) 
   
@@ -232,23 +276,35 @@ generate_forecast <- function(product, models, transform_predictions = TRUE) {
   step_forecasts <- lapply(steps, generate_step_forecasts)
   
   do.call(rbind, step_forecasts) %>% arrange(product, sku, store, week)
-
+  
 }
+
 
 write_function(generate_forecast, "R/generate_forecast.R")
 
+
+# Generate the forecasts
+
 forecasts <- generate_forecast("1", models)
 
+
+# Plot the forecast output for one SKU in one store
+
+store10 <- 10
+sku5 <- 5
+
+history <- load_data(file.path("data", "history"))
+
 history %>%
-  filter(store == 5, sku == 10) %>%
+  filter(store == store10, sku == sku5, week >= 80) %>%
   select(week, sales) %>%
   bind_rows(
     forecasts %>%
-      filter(sku == 10, store == 5) %>%
+      filter(sku == sku5, store == store10) %>%
       select(week, q5:q95)
   ) %>%
   ggplot(aes(x = week, y = q50)) +
   geom_line(colour = "red") +
   geom_linerange(aes(ymin = q25, ymax = q75), colour = "blue", size = 0.5) +
-  geom_linerange(aes(ymin = q5, ymax = q95), colour = "green", size = 0.25) +
+  geom_linerange(aes(ymin = q5, ymax = q95), colour = "royalblue1", size = 0.25) +
   geom_line(aes(x = week, y = sales))

@@ -57,6 +57,16 @@ cleardotenv <- function() {
 }
 
 
+get_env_var_list <- function() {
+  unique(
+    unlist(
+      lapply(readLines(".env"), function(x) strsplit(x, "=")[[1]][1]
+      )
+    )
+  )
+}
+
+
 run <- function(cmd, ..., test = FALSE) {
   args <- list(...)
   print(do.call(sprintf, c(cmd, args)))
@@ -91,4 +101,18 @@ load_models <- function(path) {
   names(models) <- model_names
   models
   
+}
+
+
+terminate_all_jobs <- function() {
+  jobs <- getJobList()
+  job_ids <- jobs$Id
+  lapply(job_ids, terminateJob)
+}
+
+
+delete_all_jobs <- function() {
+  jobs <- getJobList()
+  job_ids <- jobs$Id
+  lapply(job_ids, deleteJob)
 }

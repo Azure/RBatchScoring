@@ -1,17 +1,25 @@
-######################
 
-# Enter resource names
+# 05_run_job_from_docker.R
+# 
+# This script defines a docker image for the job scheduler. The forecast
+# generation process is then triggered from a docker container running locally.
+
+
+# Enter resource settings ------------------------------------------------------
+
 SCHEDULER_CONTAINER_IMAGE <- "angusrtaylor/bfscheduler"
-ACI_NAME <- "bfaci"
 
-######################
 
+# Define docker image -----------------------------------------------------
 
 library(dotenv)
 source("R/utilities.R")
+# source("R/options.R")
+# source("R/create_features.R")
+# source("R/generate_forecast.R")
+# source("R/run_batch_jobs.R")
 
 setenv("SCHEDULER_CONTAINER_IMAGE", SCHEDULER_CONTAINER_IMAGE)
-setenv("ACI_NAME", ACI_NAME)
 
 
 # Build scheduler docker image
@@ -22,6 +30,25 @@ run("docker push %s", Sys.getenv("SCHEDULER_CONTAINER_IMAGE"))
 
 
 # Run in the docker container
+
+get_env_var_list <- function() {
+  unique(
+    unlist(
+      lapply(readLines(".env"), function(x) strsplit(x, "=")[[1]][1]
+      )
+    )
+  )
+}
+
+env_vars <- get_env_var_list
+
+run(
+  paste("docker run", 
+        paste0("-e ", env_vars, "=", Sys.getenv(env_vars), collapse = " "),
+        Sys.getenv("SCHEDULER_CONTAINER_IMAGE")
+  )
+)
+
 
 run("docker run -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s %s",
     "BATCH_ACCOUNT_NAME", Sys.getenv("BATCH_ACCOUNT_NAME"),
@@ -36,7 +63,7 @@ run("docker run -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -e %s=%s -
     "NUM_NODES", Sys.getenv("NUM_NODES"),
     "WORKER_CONTAINER_IMAGE", Sys.getenv("WORKER_CONTAINER_IMAGE"),
     Sys.getenv("SCHEDULER_CONTAINER_IMAGE")
-    )
+)
 
 
 # Test in Azure Container Instance
@@ -76,7 +103,7 @@ run(
   Sys.getenv("ACI_NAME"),
   "Linux",
   "OnFailure"
-  )
+)
 
 run("az container logs --name %s --resource-group %s", Sys.getenv("ACI_NAME"), Sys.getenv("RESOURCE_GROUP"))
 
