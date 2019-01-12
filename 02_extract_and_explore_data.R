@@ -27,87 +27,29 @@ source("R/options.R")
 source("R/get_data.R")
 
 
-# Expand data on Batch ----------------------------------------------------
-
-# Register batch pool
-
-setCredentials("azure/credentials.json")
-clust <- makeCluster("azure/cluster.json")
-registerDoAzureParallel(clust)
-getDoParWorkers()
-azure_options <- list(
-  enableCloudCombine = TRUE,
-  autoDeleteJob = FALSE
-)
-
-
-# Tell nodes the mount location for the file share
-
-file_dir <- "/mnt/batch/tasks/shared/files"
-
-
-# List of packages to load on each node
-
-pkgs_to_load <- c("dplyr")
-
-
 # Factor by which to replicate products
 
 multiplier <- floor(TARGET_SKUS / length(unique(futurex$sku)))
 
-
-# Split data replication operation equally across nodes
-
-chunks <- chunk_by_nodes(multiplier)
-
-
-# Only replicate sales value history (discard other features)
-
-sales_history <- history %>% select(product, sku, store, week, sales)
-
-
-# Replicate data
-
-results <- foreach(
-  
-  idx=1:length(chunks),
-  .options.azure = azure_options,
-  .packages = pkgs_to_load,
-  .noexport = c("history")
-  
-  ) %dopar% {
-    
-    products <- chunks[[idx]]
-    
-    lapply(products, function(product) {
-      
-      sales_history %>%
-        mutate(product = product) %>%
-        write.csv(
-          file.path(file_dir, "data", "history",
-                    paste0(product, ".csv")),
-          quote = FALSE, row.names = FALSE
-        )
-      
-      futurex %>%
-        mutate(product = product) %>%
-        write.csv(
-          file.path(file_dir, "data", "futurex",
-                    paste0(product, ".csv")),
-          quote = FALSE, row.names = FALSE
-        )
-      
-    })
-    
-    TRUE
-    
+for (m in 2:multiplier) {
+  run("cp data/history/1.csv data/history/%s.csv", m)
+  run("cp data/futurex/1.csv data/futurex/%s.csv", m)
 }
+
+
+# Upload to File Share using Az Copy
+
+run(
+  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
+  "data",
+  paste0(Sys.getenv("FILE_SHARE_URL"), "data"),
+  Sys.getenv("STORAGE_ACCOUNT_KEY")
+)
 
 
 # Explore data -----------------------------------------------------------------
 
-dat <- load_data(file.path("data", "history"))
-
+dat <- read.csv(file.path("data", "history", "1.csv"))
 
 # Plot total sales
 
