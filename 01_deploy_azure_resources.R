@@ -110,24 +110,28 @@ create_azure_dir(fs, file.path("data", "futurex"))
 create_azure_dir(fs, file.path("data", "history"))
 create_azure_dir(fs, file.path("data", "forecasts"))
 
+# Factor by which to replicate products
+
+multiplier <- floor(TARGET_SKUS / length(unique(futurex$sku)))
+
+for (m in 2:multiplier) {
+  run("cp data/history/1.csv data/history/product%s.csv", m)
+  run("cp data/futurex/1.csv data/futurex/product%s.csv", m)
+}
+
+
+# Upload to File Share using Az Copy
+
+run(
+  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
+  "data",
+  paste0(Sys.getenv("FILE_SHARE_URL"), "data"),
+  Sys.getenv("STORAGE_ACCOUNT_KEY")
+)
+
 
 # Retrieve pre-trained forecasting models --------------------------------------
 
-# Download from blob storage
-
-create_dir("models")
-
-run(
-  "azcopy --source %s --destination %s --quiet --recursive",
-  file.path(
-    "https://happypathspublic.blob.core.windows.net",
-    "assets",
-    "batch_forecasting"
-  ),
-  "models"
-)
-
-run("ls models")
 
 # Transfer models to file share
 

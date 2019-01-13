@@ -107,13 +107,11 @@ dat <- fill_time_series(dat)
 dat$sales <- exp(dat$logmove)
 dat$logmove <- NULL
 
-dat$product <- 1
 dat$sku <- dat$brand
 dat$brand <- NULL
 
 dat <- dat %>%
   select(
-    product,
     sku,
     store,
     week,
@@ -139,7 +137,7 @@ max_week <- max(dat$week)
 
 history <- dat %>%
   filter(week <= max_week - FORECAST_HORIZON) %>%
-  arrange(product, sku, store, week)
+  arrange(sku, store, week)
 
 futurex <- dat %>%
   filter(week > max_week - FORECAST_HORIZON) %>%
@@ -149,12 +147,12 @@ futurex <- dat %>%
 # Write data to disk
 
 write.csv(
-  history, file.path("data", "history", "1.csv"),
+  history, file.path("data", "history", "product1.csv"),
   quote = FALSE, row.names = FALSE
 )
 
 write.csv(
-  futurex, file.path("data", "futurex", "1.csv"),
+  futurex, file.path("data", "futurex", "product1.csv"),
   quote = FALSE, row.names = FALSE
 )
 
