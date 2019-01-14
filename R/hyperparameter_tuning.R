@@ -1,12 +1,48 @@
+
+# hyperparameter_tuning.R
+# 
+# This script finds an appropriate set of hyperparameters for the t+1 GBM model
+
+library(dotenv)
+library(jsonlite)
+library(dplyr)
+library(doAzureParallel)
+library(caret)
+library(ggplot2)
+
+source("R/utilities.R")
+source("R/options.R")
+source("R/create_credentials_json.R")
+source("R/create_cluster_json.R")
+source("R/create_features.R")
+
+
+# Register batch pool and options for the job ----------------------------------
+
+setCredentials("azure/credentials.json")
+clust <- makeCluster("azure/cluster.json")
+registerDoAzureParallel(clust)
+getDoParWorkers()
+azure_options <- list(
+  enableCloudCombine = TRUE,
+  autoDeleteJob = FALSE
+)
+file_dir <- "/mnt/batch/tasks/shared/files"
+pkgs_to_load <- c("dplyr", "gbm")
+
+
 # Compute baselines -------------------------------------------------------
 
 # Load small dataset
 
-dat <- load_data("data")
+dat <- read.csv(file.path("data", "history", "product1.csv")) %>%
+  bind_rows(
+    read.csv(file.path("data", "test", "product1.csv"))
+  )
 
 # Define test period and validation period start
 
-test_start <- 102
+test_start <- 108
 
 
 # Compute the mean forecast (mean of all previous values), as the baseline
@@ -38,48 +74,16 @@ baseline <- dat %>%
 
 baseline
 
-# Note that the performance of the lag12 forecast is about as poor as the
-# mean forecast. Therefore the use of lagged features is unlikely to boost
-# performance past a certain number of time steps.
-
 
 # Tune t+1 model hyperparameters ----------------------------------------------
 
-# Define feature engineering function
-
-create_features <- function(dat, step = 1) {
-  dat %>%
-    arrange(sku, store, week) %>%
-    group_by(product, sku, store) %>%
-    mutate(
-      sales = log(sales),
-      lag1 = lag(sales, n = 1 + step - 1),
-      lag2 = lag(sales, n = 2 + step - 1),
-      lag3 = lag(sales, n = 3 + step - 1),
-      lag4 = lag(sales, n = 4 + step - 1),
-      lag5 = lag(sales, n = 5 + step - 1),
-      month_mean = (lag1 + lag2 + lag3 + lag4 + lag5) / 5,
-      month_max = max(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE),
-      month_min = min(lag1, lag2, lag3, lag4, lag5, na.rm = TRUE)
-    ) %>%
-    ungroup() %>%
-    filter(complete.cases(.)) %>%
-    group_by(product, sku, store) %>%
-    mutate(level = cummean(lag1)) %>%
-    ungroup() %>%
-    select(-c(lag2, lag3, lag4, lag5))
-}
-
-
-# Create dataset with lagged features. Log sales. Discard NAs.
-
-dat_features <- create_features(dat)
+dat <- create_features(dat, step = 1, remove_target = FALSE)
 
 
 # Split training and test sets
 
-train <- dat_features %>% filter(week < test_start) %>% as.data.frame(.)
-test <- dat_features %>% filter(week >= test_start) %>% as.data.frame(.)
+train <- dat %>% filter(week < test_start) %>% as.data.frame(.)
+test <- dat %>% filter(week >= test_start) %>% as.data.frame(.)
 
 
 # Specify training and validation fold indices
@@ -119,19 +123,19 @@ fit_control <- trainControl(
   returnData = FALSE
 )
 
-# gbm_grid <-  expand.grid(
-#   interaction.depth = c(5, 10, 15, 20),
-#   n.trees = seq(500, 3000, 500),
-#   shrinkage = c(0.01, 0.05, 0.1),
-#   n.minobsinnode = c(10)
-# )
-
 gbm_grid <-  expand.grid(
-  interaction.depth = c(15),
-  n.trees = c(1000),
-  shrinkage = c(0.01),
+  interaction.depth = c(5, 10, 15, 20),
+  n.trees = seq(500, 3000, 250),
+  shrinkage = c(0.01, 0.05, 0.1),
   n.minobsinnode = c(10)
 )
+
+# gbm_grid <-  expand.grid(
+#   interaction.depth = c(15),
+#   n.trees = c(1000),
+#   shrinkage = c(0.01),
+#   n.minobsinnode = c(10)
+# )
 
 form <- as.formula(
   paste("sales ~ sku + deal + feat + level +",
@@ -153,76 +157,20 @@ system.time({
 
 # Inspect the tuning results
 
-param_results <- gbm_fit$results %>% arrange(RMSE)
+param_results <- gbm_fit$results %>% arrange(MAE)
 View(param_results)
 
+ggplot(gbm_fit)
 
-# Retrieve the best parameter set
 
-N.TREES <- gbm_fit$bestTune$n.trees
-INTERACTION.DEPTH <- gbm_fit$bestTune$interaction.depth
-SHRINKAGE <- gbm_fit$bestTune$shrinkage
-N.MINOBSINNODE <- gbm_fit$bestTune$n.minobsinnode
-gbm_fit$bestTune
+# Fix the hyperparameters
+
+N.TREES <- 1250
+INTERACTION.DEPTH <-20
+SHRINKAGE <- 0.05
+N.MINOBSINNODE <- 10
 
 
 # Evaluate the final model on test set
 
 mape(exp(predict(gbm_fit, test, n.trees = gbm_fit$n.trees)), exp(test$sales))
-
-m <- gbm_fit$finalModel
-m$data <- NULL
-saveRDS(m, "model")
-# Plot variable importance
-
-plot(varImp(gbm_fit))
-
-
-# Find lagged feature relevance at different future time steps ------------
-
-pkgs_to_load <- c("dplyr", "gbm")
-
-vars_noexport <- c("dat", "dat_features", "train", "test", "gbm_fit")
-
-file_dir <- "/mnt/batch/tasks/shared/files"
-
-azure_options <- list(
-  chunksize = 1,
-  enableCloudCombine = TRUE,
-  autoDeleteJob = FALSE
-)
-
-# models <- foreach(step=1:FORECAST_HORIZON,
-#                   .options.azure = azure_options,
-#                   .packages = pkgs_to_load,
-#                   .noexport = vars_noexport) %dopar% {
-#                     
-#    dat <- load_data(file.path(file_dir, "data", "small"))
-#    
-#    dat <- create_features(dat, step = step)
-#   
-#    train <- dat %>% filter(week < test_start) %>% as.data.frame(.)
-#    test <- dat %>% filter(week >= test_start) %>% as.data.frame(.)
-#    
-#    model <- gbm(
-#      form,
-#      distribution = "gaussian",
-#      data = train,
-#      n.trees = N.TREES,
-#      interaction.depth = INTERACTION.DEPTH,
-#      n.minobsinnode = N.MINOBSINNODE,
-#      shrinkage = SHRINKAGE,
-#      keep.data = FALSE
-#    )
-#    
-#    perf <- mape(exp(predict(model, test, n.trees = model$n.trees)), exp(test$sales))
-#    
-#    list(model = model, perf = perf)
-#    
-#                   }
-# 
-# plot(print(unlist(lapply(models, function(m) m$perf))),
-#      xlab = "time step", ylab = "MAPE")
-# 
-# rm(models)
-# gc()
