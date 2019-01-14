@@ -2,11 +2,13 @@
 # 01_deploy_azure_resources.R
 # 
 # This script sets up Azure resources including the Batch cluster and the file
-# share where the data will be stored. The docker image to be deployed on each
-# cluster node is defined and pushed to Docker Hub.
+# share where the data will be stored. The original dataset replicated from 11
+# SKUs of one product to 1000 SKUs of 90 products. The docker image to be 
+# deployed on each cluster node is defined and pushed to your Docker Hub account.
 #
 # Note: you must have run the setup script for doAzureParallel using
-# service principal deployment and copied the output to azure/credentials.json
+# service principal deployment and copied the output to azure/credentials.json.
+# Additionally, you must have logged in to your Docker Hub account.
 
 
 # Enter resource settings ------------------------------------------------------
@@ -110,13 +112,16 @@ create_azure_dir(fs, file.path("data", "futurex"))
 create_azure_dir(fs, file.path("data", "history"))
 create_azure_dir(fs, file.path("data", "forecasts"))
 
-# Factor by which to replicate products
 
-multiplier <- floor(TARGET_SKUS / length(unique(futurex$sku)))
+# Replicate data ---------------------------------------------------------------
+
+# Factor by which to replicate products. Expand to 1000 SKUs from 90 products
+
+multiplier <- floor(TARGET_SKUS / 11)
 
 for (m in 2:multiplier) {
-  run("cp data/history/1.csv data/history/product%s.csv", m)
-  run("cp data/futurex/1.csv data/futurex/product%s.csv", m)
+  run("cp data/history/product1.csv data/history/product%s.csv", m)
+  run("cp data/futurex/product1.csv data/futurex/product%s.csv", m)
 }
 
 
@@ -124,16 +129,20 @@ for (m in 2:multiplier) {
 
 run(
   "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
-  "data",
-  paste0(Sys.getenv("FILE_SHARE_URL"), "data"),
+  file.path("data", "history"),
+  paste0(Sys.getenv("FILE_SHARE_URL"), "data/history"),
+  Sys.getenv("STORAGE_ACCOUNT_KEY")
+)
+
+run(
+  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
+  file.path("data", "futurex"),
+  paste0(Sys.getenv("FILE_SHARE_URL"), "data/futurex"),
   Sys.getenv("STORAGE_ACCOUNT_KEY")
 )
 
 
-# Retrieve pre-trained forecasting models --------------------------------------
-
-
-# Transfer models to file share
+# Transfer pre-trained forecasting models to File Share ------------------------
 
 run(
   "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
@@ -145,8 +154,12 @@ run(
 
 # Build worker docker image ----------------------------------------------------
 
-# Build and upload the worker docker image to docker hub. Review the dockerfile
-# in docker/worker/dockerfile
+# Review the dockerfile in docker/worker/dockerfile
+
+file.edit(file.path("docker", "worker", "dockerfile"))
+
+
+# Build and upload the worker docker image to Docker Hub
 
 run(
   "docker build -t %s -f docker/worker/dockerfile .",

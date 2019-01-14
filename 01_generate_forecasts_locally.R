@@ -276,8 +276,8 @@ forecasts <- generate_forecast(1, models)
 
 plot_store <- 1
 
-history %>%
-  filter(store == plot_store, sku %in% 1:4, week >= 80) %>%
+dat %>%
+  filter(store == plot_store, sku %in% 1:4, week >= 80, week < 108) %>%
   select(week, sku, sales) %>%
   bind_rows(
     forecasts %>%

@@ -129,32 +129,35 @@ create_dir("models")
 create_dir(file.path("data", "futurex"))
 create_dir(file.path("data", "history"))
 create_dir(file.path("data", "forecasts"))
+create_dir(file.path("data", "test"))
 
 
-# Split dataset into history and future features
+# Split dataset into history, future features and test sets
 
 max_week <- max(dat$week)
 
-history <- dat %>%
+dat %>%
   filter(week <= max_week - FORECAST_HORIZON) %>%
-  arrange(sku, store, week)
+  arrange(sku, store, week) %>%
+  write.csv(
+    file.path("data", "history", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
 
-futurex <- dat %>%
+dat %>%
   filter(week > max_week - FORECAST_HORIZON) %>%
-  select(-c(sales))
+  select(-c(sales)) %>%
+  write.csv(
+    file.path("data", "futurex", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
 
-
-# Write data to disk
-
-write.csv(
-  history, file.path("data", "history", "product1.csv"),
-  quote = FALSE, row.names = FALSE
-)
-
-write.csv(
-  futurex, file.path("data", "futurex", "product1.csv"),
-  quote = FALSE, row.names = FALSE
-)
+dat %>%
+  filter(week > max_week - FORECAST_HORIZON) %>%
+  write.csv(
+    file.path("data", "test", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
 
 rm(dat, orangeJuice, stores, max_week)
 gc()
