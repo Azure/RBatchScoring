@@ -87,16 +87,3 @@ rg <- az_rm$new(
 
 rg$delete()
 
- 
-# rg$deploy_template(
-#   name = "bfla",
-#   template = file.path("azure/logic_app.json"),
-#   parameters = list(
-#     connections_aci_name = "aci",
-#     workflows_bfla_name = "bfla",
-#     workflows_bfla_path = "/subscriptions/ff18d7a8-962a-406c-858f-49acd23d6c01/resourceGroups/antabf/providers/Microsoft.ContainerInstance/containerGroups/bfaci"
-#   )
-# )
-# 
-# tmp <- rg$get_template("bfla")
-# tmp$delete(free_resources = TRUE)
