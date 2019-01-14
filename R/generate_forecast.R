@@ -15,44 +15,24 @@ generate_forecast <- function(product,
   # Returns:
   #   A dataframe of quantile forecasts
   
-  
-  # Read product sales history
-  
-  history <- read.csv(
-    file.path(file_dir, "data", "history",
-              paste0("product", product, ".csv"))
-    ) %>%
-    select(sku, store, week, sales)
-  
-  
-  # Retain only the data needed to compute lagged features
-  
-  forecast_start_week <- max(history$week) + 1
-  history <- history %>% filter(week >= forecast_start_week - NLAGS)
-  
-  
-  # Read features for future time steps
-  
-  futurex <- read.csv(
-    file.path(file_dir, "data", "futurex",
-              paste0("product", product, ".csv"))
-  )
-  
-  features <- bind_rows(futurex, history) 
-  
-  
-  # Generate forecasts over the 13 steps of the forecast period
-  
-  steps <- 1:FORECAST_HORIZON
-  
+
   generate_quantile_forecast <- function(q, model_idx, dat) {
+    
+    # Retrieve time step- and quantile-specific model
     
     model_name <- paste0(
       "gbm_t", as.character(model_idx),
       "_q", as.character(100 * q)
     )
     model <- models[[model_name]]$model
+    
+    
+    # Make the prediction
+    
     pred <- predict(model, dat, n.trees = model$n.trees)
+    
+    
+    # Convert back to sales from log sales
     
     if (transform_predictions) pred <- exp(pred)
     
@@ -63,10 +43,22 @@ generate_forecast <- function(product,
   
   generate_step_forecasts <- function(step) {
     
-    step_features <- create_features(features, step = step, remove_target = TRUE)
+    # Create features specific to the required time step
+    
+    step_features <- create_features(
+      features, step = step,
+      remove_target = TRUE,
+      filter_week = forecast_start_week + step - 1
+      )
     step_features$step <- step
+
+    
+    # Specify which time step model to use
     
     if (step <= 6) model_idx <- step else model_idx <- 7
+    
+    
+    # Generate the quantile forecasts
     
     quantile_forecasts <- lapply(
       QUANTILES,
@@ -74,6 +66,7 @@ generate_forecast <- function(product,
       model_idx,
       step_features
     )
+  
     
     quantile_forecasts <- as.data.frame(quantile_forecasts)
     colnames(quantile_forecasts) <-  paste0("q", as.character(QUANTILES * 100))
@@ -85,6 +78,31 @@ generate_forecast <- function(product,
     cbind(step_features, quantile_forecasts)
     
   }
+ 
+   
+  # Read product sales history
+  
+  history <- read.csv(
+    file.path(file_dir, "data", "history",
+              paste0("product", product, ".csv"))
+    ) %>%
+    select(sku, store, week, sales)
+  
+  
+  # Read features for future time steps
+  
+  futurex <- read.csv(
+    file.path(file_dir, "data", "futurex",
+              paste0("product", product, ".csv"))
+  )
+  
+  forecast_start_week <- min(futurex$week)
+  
+  features <- bind_rows(futurex, history) 
+  
+  # Generate forecasts over the 13 steps of the forecast period
+  
+  steps <- 1:FORECAST_HORIZON
   
   step_forecasts <- lapply(steps, generate_step_forecasts)
   
