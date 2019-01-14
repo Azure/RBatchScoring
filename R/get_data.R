@@ -2,6 +2,9 @@ library(bayesm)
 library(dplyr)
 library(tidyr)
 
+source("R/options.R")
+source("R/utilities.R")
+
 
 print("Extracting data from bayesm package...")
 
@@ -14,6 +17,7 @@ dat <- dat %>%
   mutate(feat = as.integer(feat))
 
 print("Cleaning data...")
+
 
 # Removing discontinued stores/brands
 
@@ -28,6 +32,25 @@ dat <- dat %>%
   )
 
 
+# Reset store names
+
+stores <- dat %>%
+  select(store) %>%
+  distinct()
+
+stores$store_new <- as.integer(row.names(stores))
+
+dat <- dat %>%
+  merge(stores) %>%
+  mutate(store = store_new) %>%
+  select(-store_new)
+
+
+# Set first week to be 0
+
+dat$week <- dat$week - min(dat$week)
+
+
 # Inserting records for missing time periods
 
 get_stores_brands <- function(dat) {
@@ -36,6 +59,7 @@ get_stores_brands <- function(dat) {
     select(store, brand) %>%
     distinct()
   split(df, seq(nrow(df)))
+  
 }
 
 insert_periods <- function(dat) {
@@ -61,6 +85,7 @@ insert_periods <- function(dat) {
 
 dat <- insert_periods(dat)
 
+
 # Filling missing values
 
 fill_time_series <- function(dat) {
@@ -71,39 +96,70 @@ fill_time_series <- function(dat) {
     fill(-c(store, brand, week), .direction = "down") %>%
     ungroup()
   as.data.frame(dat)
+  
 }
 
 dat <- fill_time_series(dat)
 
-# Set first week to be 0
 
-dat$week <- dat$week - min(dat$week)
+# Transform and rename variables
 
-dat$logsales <- dat$logmove
+dat$sales <- exp(dat$logmove)
 dat$logmove <- NULL
 
-print("Saving data...")
+dat$sku <- dat$brand
+dat$brand <- NULL
 
-# Save a lookup of stores and brands
+dat <- dat %>%
+  select(
+    sku,
+    store,
+    week,
+    deal,
+    feat,
+    price1:price11,
+    sales
+  )
 
-write.csv(
-  dat %>% select(store, brand) %>% distinct(),
-  file = "lookup.csv",
-  quote = FALSE,
-  row.names = FALSE
-)
 
-# Split data into separate csv files
+# Create data directories
 
-save_csv <- function(item) {
-  s <- item$store
-  b <- item$brand
-  df <- dat %>% filter(store == s, brand == b)
-  write.csv(df, file = file.path("data", paste0(s, "_", b, ".csv")), quote = FALSE, row.names = FALSE)
-}
+create_dir("data")
+create_dir("models")
+create_dir(file.path("data", "futurex"))
+create_dir(file.path("data", "history"))
+create_dir(file.path("data", "forecasts"))
+create_dir(file.path("data", "test"))
 
-stores_brands <- get_stores_brands(dat)
 
-lapply(stores_brands, save_csv)
+# Split dataset into history, future features and test sets
+
+max_week <- max(dat$week)
+
+dat %>%
+  filter(week <= max_week - FORECAST_HORIZON) %>%
+  arrange(sku, store, week) %>%
+  write.csv(
+    file.path("data", "history", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
+
+dat %>%
+  filter(week > max_week - FORECAST_HORIZON) %>%
+  select(-c(sales)) %>%
+  write.csv(
+    file.path("data", "futurex", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
+
+dat %>%
+  filter(week > max_week - FORECAST_HORIZON) %>%
+  write.csv(
+    file.path("data", "test", "product1.csv"),
+    quote = FALSE, row.names = FALSE
+  )
+
+rm(dat, orangeJuice, stores, max_week)
+gc()
 
 print("Done")

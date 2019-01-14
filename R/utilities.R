@@ -1,35 +1,39 @@
-
-read_all_data <- function(filedir) {
-  files2read = list.files(path = file.path(filedir, "data"), pattern="*.csv", full.names = TRUE)
-  files = lapply(files2read, read.csv)
-  do.call(rbind, files)
+chunk_by_nodes <- function(multiplier) {
+  
+  num_nodes <- as.numeric(Sys.getenv("NUM_NODES"))
+  reps <- rep(1:num_nodes, each=multiplier/num_nodes)
+  reps <- c(reps, rep(max(reps), multiplier - length(reps)))
+  chunks <- split(1:multiplier, reps)
+  chunks
+  
 }
 
-df2list <- function(store_brand, dat, start = c(0, 0)) {
-  s <- store_brand$store
-  b <- store_brand$brand
-  df <- dat %>% filter(store == s, brand == b)
-  xreg <- df %>%
-    select(
-      price1,
-      price2,
-      price3,
-      price4,
-      price5,
-      price6,
-      price7,
-      price8,
-      price9,
-      price10,
-      price11,
-      deal,
-      feat
-    )
-  list(store = s, brand = b,
-       series =  df %>%
-         select(logsales) %>%
-         ts(frequency = 52, start = start),
-       xreg = xreg
+
+create_dir <- function(path) if (!dir.exists(path)) dir.create(path)
+
+
+load_data <- function(path = ".") {
+  files <- lapply(list.files(path, full.names = TRUE), read.csv)
+  dat <- do.call("rbind", files)
+}
+
+
+list_required_models <- function(lagged_feature_steps, quantiles) {
+  required_models <- expand.grid(1:(lagged_feature_steps + 1), quantiles)
+  colnames(required_models) <- c("step", "quantile")
+  split(required_models, seq(nrow(required_models)))
+}
+
+
+list_model_names <- function(required_models) {
+  lapply(
+    required_models,
+    function(model) {
+      paste0(
+        "gbm_t", as.character(model$step), "_q",
+        as.character(model$quantile * 100)
+      )
+    }
   )
 }
 
@@ -53,6 +57,16 @@ cleardotenv <- function() {
 }
 
 
+get_env_var_list <- function() {
+  unique(
+    unlist(
+      lapply(readLines(".env"), function(x) strsplit(x, "=")[[1]][1]
+      )
+    )
+  )
+}
+
+
 run <- function(cmd, ..., test = FALSE) {
   args <- list(...)
   print(do.call(sprintf, c(cmd, args)))
@@ -61,4 +75,44 @@ run <- function(cmd, ..., test = FALSE) {
       do.call(sprintf, c(cmd, args))
     )
   }
+}
+
+
+write_function <- function(fn, file) {
+  fn_name <- deparse(substitute(fn))
+  fn_capture <- capture.output(print(fn))
+  fn_capture[1] <- paste0(fn_name, " <- ", fn_capture[1])
+  writeLines(fn_capture, file)
+}
+
+
+load_model <- function(name, path) {
+  list(name = name, model = readRDS(file.path(path, name)))
+}
+
+
+load_models <- function(path) {
+  
+  model_names <-list_model_names(
+    list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
+  )
+  
+  models <- lapply(model_names, load_model, path)
+  names(models) <- model_names
+  models
+  
+}
+
+
+terminate_all_jobs <- function() {
+  jobs <- getJobList()
+  job_ids <- jobs$Id
+  lapply(job_ids, terminateJob)
+}
+
+
+delete_all_jobs <- function() {
+  jobs <- getJobList()
+  job_ids <- jobs$Id
+  lapply(job_ids, deleteJob)
 }
