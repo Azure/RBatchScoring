@@ -52,4 +52,14 @@ upload_to_url(
   key = key
 )
 
+
+upload_to_url(
+  src = "architecture.png",
+  dest = file.path(
+    "https://happypathspublic.blob.core.windows.net",
+    "assets", "batch_forecasting", "images", "architecture.png"
+  ),
+  key = key 
+)
+
 list_blobs(assets)
