@@ -16,7 +16,8 @@ run_batch_jobs <- function(chunks, vars_to_export) {
         
         forecasts <- generate_forecast(
           as.character(product),
-          models
+          models,
+          file_dir = file_dir
         )
         
         write.csv(
