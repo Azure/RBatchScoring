@@ -256,29 +256,34 @@ write_function(generate_forecast, "R/generate_forecast.R")
 
 # Generate a forecast for all 11 SKUs of product 1
 
-forecasts <- generate_forecast("1", models)
+forecasts <- generate_forecast(1, models)
 
 
 # Plot the forecast output for one SKU in one store
 
-store10 <- 10
-sku5 <- 5
-
 history %>%
-  filter(store == store10, sku == sku5, week >= 80) %>%
-  select(week, sales) %>%
+  filter(store == plot_store, sku %in% 1:4, week >= 80) %>%
+  select(week, sku, sales) %>%
   bind_rows(
     forecasts %>%
-      filter(sku == sku5, store == store10) %>%
-      select(week, q5:q95)
+      filter(store == plot_store, sku %in% 1:4) %>%
+      select(week, sku, q5:q95)
   ) %>%
   ggplot(aes(x = week)) +
-  geom_ribbon(aes(ymin = q5, ymax = q95, fill = "5%-95%"), alpha = .25) + 
-  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "25%-75%"), alpha = .25) +
-  geom_line(aes(y = q50, colour = "q50")) +
-  geom_line(aes(x = week, y = sales)) +
-  scale_fill_manual(name = "", values = c("25%-75%" = "red", "5%-95%" = "blue")) +
+  facet_grid(rows = vars(sku), scales = "free_y") +
+  geom_ribbon(aes(ymin = q5, ymax = q95, fill = "q5-q95"), alpha = .25) + 
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "q25-q75"), alpha = .25) +
+  geom_line(aes(y = q50, colour = "q50"), linetype="dashed") +
+  geom_line(aes(y = sales)) +
+  scale_y_log10() +
+  scale_fill_manual(name = "", values = c("q25-q75" = "red", "q5-q95" = "blue")) +
   scale_colour_manual(name = "", values = c("q50" = "black")) +
+  theme(
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
   labs(y = "sales") +
-  ggtitle(paste("Forecast for product 1, sku", sku5, "in store", store10))
-
+  ggtitle(paste("Forecasts for SKUs 1 to 4 in store 1")) +
+  ggsave("forecasts.png", device = "png", width = 7, height = 7)

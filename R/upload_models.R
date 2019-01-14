@@ -19,8 +19,23 @@ list_blobs(assets)
 run(
   "azcopy --source %s --destination %s --dest-key %s --recursive --quiet",
   "models",
-  file.path("https://happypathspublic.blob.core.windows.net", "assets", "batch_forecasting"),
+  file.path(
+    "https://happypathspublic.blob.core.windows.net",
+    "assets", "batch_forecasting", "models"
+  ),
   key
 )
 
 list_blobs(assets)
+
+
+# Upload images -----------------------------------------------------------
+
+upload_to_url(
+  src = "forecasts.png",
+  dest = file.path(
+    "https://happypathspublic.blob.core.windows.net",
+    "assets", "batch_forecasting", "images"
+  ),
+  key = key
+)
