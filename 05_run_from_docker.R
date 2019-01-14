@@ -7,7 +7,7 @@
 
 # Enter resource settings ------------------------------------------------------
 
-SCHEDULER_CONTAINER_IMAGE <- "angusrtaylor/bfscheduler"
+SCHEDULER_CONTAINER_IMAGE <- "" # e.g. <your-docker-id>/bfscheduler
 
 
 # Define docker image ----------------------------------------------------------

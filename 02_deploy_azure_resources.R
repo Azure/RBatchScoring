@@ -1,5 +1,5 @@
 
-# 01_deploy_azure_resources.R
+# 02_deploy_azure_resources.R
 # 
 # This script sets up Azure resources including the Batch cluster and the file
 # share where the data will be stored. The original dataset replicated from 11
@@ -13,11 +13,11 @@
 
 # Enter resource settings ------------------------------------------------------
 
-FILE_SHARE_NAME <- "bffs"
-CLUSTER_NAME <- "bfclust"
-WORKER_CONTAINER_IMAGE <- "angusrtaylor/bfworker"
-VM_SIZE <- "Standard_DS2_v2"
-NUM_NODES <- "10"
+FILE_SHARE_NAME <- ""         # e.g. bffs
+CLUSTER_NAME <- ""            # e.g. bfcl
+WORKER_CONTAINER_IMAGE <- ""  # e.g. <your-docker-id>/bfworker
+VM_SIZE <- ""                 # e.g. Standard_DS2_v2
+NUM_NODES <- ""               # e.g. 5
 
 
 # Set environment variables ----------------------------------------------------

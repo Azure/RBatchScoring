@@ -1,5 +1,5 @@
 
-# 02_(optional)_train_forecasting_models.R
+# 03_(optional)_train_forecasting_models.R
 # 
 # This script trains GBM forecasting models for the 13 time steps in the
 # forecast horizon and 5 quantiles. Trained models will be saved directly
@@ -107,7 +107,8 @@ result <- foreach(
     
     model$data <- NULL
     
-    name <- paste0("gbm_t", as.character(step), "_q", as.character(quantile * 100))
+    name <- paste0("gbm_t", as.character(step), "_q",
+                   as.character(quantile * 100))
     saveRDS(model, file = file.path(file_dir, "models", name))
     
     

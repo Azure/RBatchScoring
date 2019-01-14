@@ -17,8 +17,8 @@
 
 # Enter resource settings ------------------------------------------------------
 
-LOGIC_APP_NAME <- "bfla"
-ACI_NAME <- "bfaci"
+LOGIC_APP_NAME <- ""  # e.g. bfla
+ACI_NAME <- ""        # e.g. bfaci
 
 
 # Deploy Logic App -------------------------------------------------------------
