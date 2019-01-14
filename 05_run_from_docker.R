@@ -10,7 +10,7 @@
 SCHEDULER_CONTAINER_IMAGE <- "angusrtaylor/bfscheduler"
 
 
-# Define docker image -----------------------------------------------------
+# Define docker image ----------------------------------------------------------
 
 library(dotenv)
 source("R/utilities.R")
@@ -18,16 +18,30 @@ source("R/utilities.R")
 setenv("SCHEDULER_CONTAINER_IMAGE", SCHEDULER_CONTAINER_IMAGE)
 
 
+# Review the scheduler docker image
+
+file.edit(file.path("docker", "scheduler", "dockerfile"))
+
+
 # Build scheduler docker image
 
-run("docker build -t %s -f docker/scheduler/dockerfile .", Sys.getenv("SCHEDULER_CONTAINER_IMAGE"))
-run("docker tag %s:latest %s", Sys.getenv("SCHEDULER_CONTAINER_IMAGE"), Sys.getenv("SCHEDULER_CONTAINER_IMAGE"))
+run(
+  "docker build -t %s -f docker/scheduler/dockerfile .",
+  Sys.getenv("SCHEDULER_CONTAINER_IMAGE")
+)
+
+run(
+  "docker tag %s:latest %s",
+  Sys.getenv("SCHEDULER_CONTAINER_IMAGE"),
+  Sys.getenv("SCHEDULER_CONTAINER_IMAGE")
+)
+
 run("docker push %s", Sys.getenv("SCHEDULER_CONTAINER_IMAGE"))
 
 
-# Run in the docker container
+# Run the docker container
 
-env_vars <- get_env_var_list
+env_vars <- get_env_var_list()
 
 run(
   paste("docker run", 

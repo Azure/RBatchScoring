@@ -20,7 +20,7 @@
         {
             "comments": "Generalized from resource: '/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}/providers/Microsoft.Logic/workflows/{LOGIC_APP_NAME}'.",
             "type": "Microsoft.Logic/workflows",
-            "name": "workflows_{LOGIC_APP_NAME}_name",
+            "name": "{LOGIC_APP_NAME}",
             "apiVersion": "2017-07-01",
             "location": "{REGION}",
             "tags": {},
@@ -39,8 +39,8 @@
                     "triggers": {
                         "Recurrence": {
                             "recurrence": {
-                                "frequency": "Minute",
-                                "interval": 10
+                                "frequency": "Week",
+                                "interval": 1
                             },
                             "type": "Recurrence"
                         }

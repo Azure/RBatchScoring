@@ -1,12 +1,15 @@
 
 # 05_deploy_logic_app.R
 
-# This script will deploy a Logic App from an Azure Resource Manager (ARM)
-# template. The Logic App will deploy an Azure Container Instance on a schedule
-# to run the 04_forecast_on_batch.R script to generate forecasts.
+# This script deploys a Logic App from an Azure Resource Manager (ARM)
+# template. The Logic App will create an Azure Container Instance on a schedule
+# set to run once a week. The ACI runs the 04_forecast_on_batch.R script to 
+# generate forecasts.
 
 # Note: after deploying the ARM template, you must authorize the ACI connector
 # in the Azure Portal witch gives permission to the Logic App to deploy the ACI.
+# See the README.md file for instructions on how to do this.
+#
 # The first run of the Logic App will always fail because it is not yet
 # authenticated. Once the ACI connector has been authorized, click Run Trigger
 # in the Logic App pane to trigger the batch forecasting process.
@@ -61,14 +64,30 @@ run(
     "azure/logic_app.json"
 )
 
-# rg <- az_rm$new(
-#     tenant = Sys.getenv("TENANT_ID"),
-#     app = Sys.getenv("SP_NAME"),
-#     password = Sys.getenv("SP_PASSWORD")
-#   )$
-#   get_subscription(Sys.getenv("SUBSCRIPTION_ID"))$
-#   get_resource_group(Sys.getenv("RESOURCE_GROUP"))
-# 
+
+# Check the logs of the ACI. Note that it will take a few minutes for the
+# ACI to start up and this command will result in a error if run too soon.
+
+run("az container logs --resource-group %s --name %s",
+    Sys.getenv("RESOURCE_GROUP"),
+    Sys.getenv("ACI_NAME"))
+
+
+# Clean up resources -----------------------------------------------------------
+
+# Delete the resource group
+
+rg <- az_rm$new(
+    tenant = Sys.getenv("TENANT_ID"),
+    app = Sys.getenv("SP_NAME"),
+    password = Sys.getenv("SP_PASSWORD")
+  )$
+  get_subscription(Sys.getenv("SUBSCRIPTION_ID"))$
+  get_resource_group(Sys.getenv("RESOURCE_GROUP"))
+
+rg$delete()
+
+ 
 # rg$deploy_template(
 #   name = "bfla",
 #   template = file.path("azure/logic_app.json"),
