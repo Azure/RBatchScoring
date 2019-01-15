@@ -22,7 +22,9 @@ run_batch_jobs <- function(chunks, vars_to_export) {
         
         write.csv(
           forecasts, 
-          file.path(file_dir, "data", "forecasts", paste0(product, ".csv")),
+          file.path(
+            file_dir, "data", "forecasts",
+            paste0("product", product, ".csv")),
           quote = FALSE, row.names = FALSE
         )
         

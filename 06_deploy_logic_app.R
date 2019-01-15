@@ -65,12 +65,22 @@ run(
 )
 
 
+# Check the provisioning state of the ACI
+
+run(
+  "az container show -g %s -n %s -o table",
+  Sys.getenv("RESOURCE_GROUP"),
+  Sys.getenv("ACI_NAME")
+)
+
+
 # Check the logs of the ACI. Note that it will take a few minutes for the
 # ACI to start up and this command will result in a error if run too soon.
 
 run("az container logs --resource-group %s --name %s",
     Sys.getenv("RESOURCE_GROUP"),
-    Sys.getenv("ACI_NAME"))
+    Sys.getenv("ACI_NAME")
+)
 
 
 # Clean up resources -----------------------------------------------------------
