@@ -91,7 +91,7 @@ load_model <- function(name, path) {
 }
 
 
-load_models <- function(path) {
+load_models <- function(path = "models") {
   
   model_names <-list_model_names(
     list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)

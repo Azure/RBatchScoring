@@ -94,7 +94,7 @@ list.files("models")
 
 # Load trained models
 
-models <- load_models(path = "models")
+models <- load_models()
 
 
 # Define function for creating model features
