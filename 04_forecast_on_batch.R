@@ -33,9 +33,18 @@ if (!interactive()) {
 }
 
 setCredentials("azure/credentials.json")
+
+
+# Set the cluster if already exists, otherwise create it
+
 clust <- makeCluster("azure/cluster.json")
+
+
+# Register the cluster as the doAzureParallel backend
 registerDoAzureParallel(clust)
-getDoParWorkers()
+
+print(paste("Cluster has", getDoParWorkers(), "nodes"))
+
 azure_options <- list(
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE
@@ -106,6 +115,11 @@ write_function(run_batch_jobs, "R/run_batch_jobs.R")
 system.time({
   run_batch_jobs(chunks, vars_to_export)
 })
+
+
+# Delete the cluster
+
+stopCluster(clust)
 
 
 # Plot results to validate

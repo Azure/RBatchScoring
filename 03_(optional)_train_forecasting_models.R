@@ -31,9 +31,18 @@ if (!interactive()) {
 }
 
 setCredentials("azure/credentials.json")
+
+
+# Set the cluster if already exists, otherwise create it
+
 clust <- makeCluster("azure/cluster.json")
+
+
+# Register the cluster as the doAzureParallel backend
 registerDoAzureParallel(clust)
-getDoParWorkers()
+
+print(paste("Cluster has", getDoParWorkers(), "nodes"))
+
 azure_options <- list(
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE

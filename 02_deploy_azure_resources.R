@@ -177,7 +177,7 @@ run(
 run("docker push %s", Sys.getenv("WORKER_CONTAINER_IMAGE"))
 
 
-# Provision cluster ------------------------------------------------------------
+# Define cluster ---------------------------------------------------------------
 
 # Set doAzureParallel credentials
 
@@ -186,7 +186,7 @@ doAzureParallel::setCredentials("azure/credentials.json")
 
 # Create the cluster config file and provision the cluster
 
-create_cluster_json <- function(save_dir) {
+create_cluster_json <- function(save_dir = "azure") {
   
   mount_str <- paste(
     "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/files",
@@ -229,4 +229,4 @@ create_cluster_json <- function(save_dir) {
 write_function(create_cluster_json, "R/create_cluster_json.R")
 
 create_cluster_json(save_dir = "azure")
-cluster <- makeCluster("azure/cluster.json")
+
