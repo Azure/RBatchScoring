@@ -13,6 +13,8 @@
 # The first run of the Logic App will always fail because it is not yet
 # authenticated. Once the ACI connector has been authorized, click Run Trigger
 # in the Logic App pane to trigger the batch forecasting process.
+#
+# Run time ~6 minutes on a 5 node cluster
 
 
 # Enter resource settings ------------------------------------------------------

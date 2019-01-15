@@ -4,6 +4,8 @@
 # This script trains GBM forecasting models for the 13 time steps in the
 # forecast horizon and 5 quantiles. Trained models will be saved directly
 # to the File Share, overwriting any models that already exist there.
+#
+# Run time ~30 minutes on a 5 node cluster
 
 
 library(dotenv)

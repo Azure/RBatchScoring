@@ -5,6 +5,8 @@
 # Batch. The doAzureParallel package schedules the jobs to be executed on the
 # cluster and manages the job queue. Forecast results are written to the
 # File Share.
+#
+# Run time ~5 minutes on a 5 node cluster
 
 
 library(dotenv)

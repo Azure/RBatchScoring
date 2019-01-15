@@ -9,6 +9,8 @@
 # Note: you must have run the setup script for doAzureParallel using
 # service principal deployment and copied the output to azure/credentials.json.
 # Additionally, you must have logged in to your Docker Hub account.
+#
+# Run time ~4 minutes
 
 
 # Enter resource settings ------------------------------------------------------

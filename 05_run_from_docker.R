@@ -3,6 +3,8 @@
 # 
 # This script defines a docker image for the job scheduler. The forecast
 # generation process is then triggered from a docker container running locally.
+#
+# Run time ~5 minutes on a 5 node cluster
 
 
 # Enter resource settings ------------------------------------------------------
