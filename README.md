@@ -2,7 +2,7 @@
 
 ## Overview
 
-In this repository, we use the scenario of product sales forecasting. This architecture can be generalized for any scenario involving batch scoring using R models.
+In this repository, we use the scenario of product sales forecasting to demonstrate the recommended approach for batch scoring with R models on Azure. This architecture can be generalized for any scenario involving batch scoring using R models.
 
 ## Design
 ![Reference Architecture Diagram](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/architecture.png)
@@ -16,16 +16,20 @@ The above architecture works as follows:
 ### Forecasting scenario
 ![Product sales forecasting](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/forecasts.png)
 
-This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can typically carry many tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. This example uses the Orange Juice dataset from the *bayesm* R package which consists of just over two year's worth of weekly sales data for 11 orange juice brands across 83 stores. The data includes covariates including the prices of each product, whether the product was on a deal or was featured in the store in each week. We expand this data through replication, resulting in 1000 products across 83 stores. We use show how trained GBM models (from the *gbm* R package) can be used to generate quantile forecasts with a forecast horizon of 13 weeks (1 quarter). Quantile forecasts allow for the uncertainty in the forecast to be estimanted and in this example we generate five quantiles (the 5th, 25th, 50th, 75th and 95th quantiles). The total number of model scoring operations is 1000 products x 83 stores x 13 weeks x 5 quantiles = 5.4 million. A large retail store could carry many times this number of products but this architecture is capable of scaling to this challenge.
+This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can typically carry many tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. This example uses the Orange Juice dataset from the *bayesm* R package which consists of just over two years' worth of weekly sales data for 11 orange juice SKUs (stock keeping units) across 83 stores. The data includes covariates including the price of each product, whether the product was on a deal or was featured in the store in each week. We expand this data through replication, resulting in 1,000 SKUs across 83 stores. We show how trained GBM models (from the *gbm* R package) can be used to generate quantile forecasts with a forecast horizon of 13 weeks (1 quarter). Quantile forecasts allow for the uncertainty in the forecast to be estimated and in this example we generate five quantiles (the 5th, 25th, 50th, 75th and 95th percentiles). The total number of model scoring operations is 1,000 SKUs x 83 stores x 13 weeks x 5 quantiles = 5.4 million. A large retail store could carry many times this number of products but this architecture is capable of scaling to this challenge.
 
 ## Prerequisites
+
+This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with all the local/working machine dependencies pre-installed.
 
 Local/Working Machine:
 - Ubuntu >=16.04LTS (not tested on Mac or Windows)
 - R >= 3.4.3
-- [Docker >=1.0](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)
-- [AzCopy >=7.0.0](https://docs.microsoft.com/azure/storage/common/storage-use-azcopy-linux?toc=%2fazure%2fstorage%2ffiles%2ftoc.json)
-- [Azure CLI >=2.0](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest)
+- [RStudio Server](https://www.rstudio.com/products/rstudio/download-server/) >=1.1.4 (recommended but other IDEs can be used)
+- [Anaconda](https://www.anaconda.com/download/#linux) >=1.6.14
+- [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0
+- [AzCopy](https://docs.microsoft.com/azure/storage/common/storage-use-azcopy-linux?toc=%2fazure%2fstorage%2ffiles%2ftoc.json) >=7.0.0
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) >=2.0
 
 R packages*:
 - gbm >=2.1.4.9000
@@ -55,19 +59,25 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
 4. Log in to Azure using the Azure CLI `az login`
-5. Setup resources for doAzureParallel using service principal. You will be asked to provide names for several resources.
+5. Setup resources for doAzureParallel using service principal. It is recommended you run these commands using the (bash) [Azure Cloud Shell](https://shell.azure.com).  You will be asked to provide names for several resources. **Retain the json output of these commands for the next step**
     ```
     wget -q https://raw.githubusercontent.com/Azure/doAzureParallel/master/account_setup.sh &&
     chmod 755 account_setup.sh &&
     /bin/bash account_setup.sh serviceprincipal
     ```
+6. Create credentials file and paste the json output of the above command into the file `touch azure/credentials.json`
+7. Log in to Docker using the docker cli `docker login`
+8. Enable non-root users to run docker commands
+    ```
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    ```
+    Restart your terminal after running the above commands
 
-    Note: you **must** copy the output of the above command into *azure/credentials.json*.
-6. Log in to Docker using the docker cli `docker login`
 
 ## Steps:
 
-Run through the following R scripts (ideally from R Studio):
+Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio.
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
 3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
