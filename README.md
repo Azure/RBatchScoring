@@ -77,7 +77,7 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
 
 ## Steps:
 
-Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio.
+Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/BatchForecasting")`.
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
 3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
