@@ -45,6 +45,7 @@ dat %>%
   geom_ribbon(aes(ymin = q5, ymax = q95, fill = "5%-95%"), alpha = .25) + 
   geom_ribbon(aes(ymin = q25, ymax = q75, fill = "25%-75%"), alpha = .25) +
   geom_line(aes(y = q50, colour = "q50")) +
+  scale_y_log10() +
   scale_fill_manual(name = "", values = c("25%-75%" = "red", "5%-95%" = "blue")) +
   scale_colour_manual(name = "", values = c("q50" = "black")) +
   labs(y = "total sales by store") +
