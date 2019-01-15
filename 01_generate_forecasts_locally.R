@@ -80,8 +80,7 @@ run(
   "azcopy --source %s --destination %s --quiet --recursive",
   file.path(
     "https://happypathspublic.blob.core.windows.net",
-    "assets",
-    "batch_forecasting"
+    "assets", "batch_forecasting", "models"
   ),
   "models"
 )
