@@ -59,7 +59,7 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
 4. Log in to Azure using the Azure CLI `az login`
-5. Setup resources for doAzureParallel using service principal. It is recommended you run these commands using the (bash) [Azure Cloud Shell](https://shell.azure.com).  You will be asked to provide names for several resources. **Retain the json output of these commands for the next step**
+5. Setup resources for doAzureParallel using service principal. It is recommended you run these commands using the (bash) [Azure Cloud Shell](https://shell.azure.com).  You will be asked to provide names for several resources. Do not deploy resources in an existing resource group. **Retain the json output of these commands for the next step**
     ```
     wget -q https://raw.githubusercontent.com/Azure/doAzureParallel/master/account_setup.sh &&
     chmod 755 account_setup.sh &&
@@ -77,7 +77,7 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
 
 ## Steps:
 
-Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/BatchForecasting")`.
+Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/BatchForecasting")`. It is recommended that you restart your R session and clear the R environment before running each script.
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
 3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
