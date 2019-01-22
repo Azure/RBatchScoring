@@ -18,7 +18,7 @@ devtools::install_github(
 
 devtools::install_github(
   "cloudyr/AzureStor",
-  ref = "5c8478f917b9f1d7683067b98dfea676d933a5cf"
+  ref = "45214f7713bb37cfbac616ea1a7b5dfee76a2bc9"
 )
 
 devtools::install_github(
