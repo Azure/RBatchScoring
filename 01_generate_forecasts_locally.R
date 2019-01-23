@@ -11,6 +11,7 @@
 library(dplyr)
 library(gbm)
 library(ggplot2)
+library(AzureStor)
 
 source("R/utilities.R")
 source("R/options.R")
@@ -76,14 +77,15 @@ dat %>%
 
 create_dir("models")
 
-run(
-  "azcopy --source %s --destination %s --quiet --recursive",
-  file.path(
-    "https://happypathspublic.blob.core.windows.net",
-    "assets", "batch_forecasting", "models"
-  ),
-  "models"
+cont <- blob_container("https://happypathspublic.blob.core.windows.net/assets")
+list_blobs(cont)
+multidownload_blob(
+  cont,
+  src = "/batch_forecasting/models/*",
+  dest = "models",
+  overwrite = TRUE
 )
+
 
 
 # List the downloaded models. Note that models for t7 (time step 7) will be
