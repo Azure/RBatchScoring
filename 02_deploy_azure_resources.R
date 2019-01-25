@@ -98,12 +98,7 @@ setenv(
 
 # Create file share and directory structure ------------------------------------
 
-create_file_share(
-  Sys.getenv("FILE_SHARE_URL"),
-  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
-)
-
-fs <- file_share(
+fs <- create_file_share(
   Sys.getenv("FILE_SHARE_URL"),
   key = Sys.getenv("STORAGE_ACCOUNT_KEY")
 )
@@ -127,30 +122,28 @@ for (m in 2:multiplier) {
 }
 
 
-# Upload to File Share using Az Copy
+# Upload data to File Share
 
-run(
-  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
-  file.path("data", "history"),
-  paste0(Sys.getenv("FILE_SHARE_URL"), "data/history"),
-  Sys.getenv("STORAGE_ACCOUNT_KEY")
+multiupload_azure_file(
+  fs,
+  src = "data/history/*",
+  dest = "data/history"
 )
 
-run(
-  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
-  file.path("data", "futurex"),
-  paste0(Sys.getenv("FILE_SHARE_URL"), "data/futurex"),
-  Sys.getenv("STORAGE_ACCOUNT_KEY")
+
+multiupload_azure_file(
+  fs,
+  src = "data/futurex/*",
+  dest = "data/futurex"
 )
 
 
 # Transfer pre-trained forecasting models to File Share ------------------------
 
-run(
-  "azcopy --source %s --destination %s --dest-key %s --quiet --recursive",
-  "models",
-  paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
-  Sys.getenv("STORAGE_ACCOUNT_KEY")
+multiupload_azure_file(
+  fs,
+  src = "models/*",
+  dest = "models"
 )
 
 

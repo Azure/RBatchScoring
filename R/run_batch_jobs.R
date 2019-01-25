@@ -7,17 +7,32 @@ run_batch_jobs <- function(chunks, vars_to_export) {
       .export = vars_to_export
     ) %dopar% {
     
+      file_dir <- "/mnt/batch/tasks/shared/files"
       
       models <- load_models(file.path(file_dir, "models"))
+      
   
       products <- chunks[[idx]]
       
       for (product in products) {
         
+        history <- read.csv(
+          file.path(file_dir,
+                    "data", "history",
+                    paste0("product", product, ".csv"))
+        ) %>%
+          select(sku, store, week, sales)
+        
+        futurex <- read.csv(
+          file.path(file_dir,
+                    "data", "futurex",
+                    paste0("product", product, ".csv"))
+        )
+        
         forecasts <- generate_forecast(
-          as.character(product),
-          models,
-          file_dir = file_dir
+          futurex,
+          history,
+          models
         )
         
         write.csv(

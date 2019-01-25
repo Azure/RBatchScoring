@@ -49,13 +49,12 @@ azure_options <- list(
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE
 )
-file_dir <- "/mnt/batch/tasks/shared/files"
+
 pkgs_to_load <- c("dplyr", "gbm")
 vars_to_export <- c(
     "NLAGS",
     "FORECAST_HORIZON",
     "QUANTILES",
-    "file_dir",
     "load_model",
     "load_models",
     "create_features",
@@ -81,17 +80,32 @@ run_batch_jobs <- function(chunks, vars_to_export) {
       .export = vars_to_export
     ) %dopar% {
     
+      file_dir <- "/mnt/batch/tasks/shared/files"
       
       models <- load_models(file.path(file_dir, "models"))
+      
   
       products <- chunks[[idx]]
       
       for (product in products) {
         
+        history <- read.csv(
+          file.path(file_dir,
+                    "data", "history",
+                    paste0("product", product, ".csv"))
+        ) %>%
+          select(sku, store, week, sales)
+        
+        futurex <- read.csv(
+          file.path(file_dir,
+                    "data", "futurex",
+                    paste0("product", product, ".csv"))
+        )
+        
         forecasts <- generate_forecast(
-          as.character(product),
-          models,
-          file_dir = file_dir
+          futurex,
+          history,
+          models
         )
         
         write.csv(
