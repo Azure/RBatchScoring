@@ -24,6 +24,7 @@ NUM_NODES <- ""               # e.g. 5
 
 # Set environment variables ----------------------------------------------------
 
+library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
 library(AzureRMR)
