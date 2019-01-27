@@ -59,8 +59,8 @@
                                                 "properties": {
                                                     "environmentVariables": [
                                                         {
-                                                            "name": "FILE_SHARE_NAME",
-                                                            "value": "{FILE_SHARE_NAME}"
+                                                            "name": "BLOB_CONTAINER_NAME",
+                                                            "value": "{BLOB_CONTAINER_NAME}"
                                                         },
                                                         {
                                                             "name": "CLUSTER_NAME",
@@ -115,8 +115,8 @@
                                                             "value": "{STORAGE_ACCOUNT_RESOURCE_ID}"
                                                         },
                                                         {
-                                                            "name": "FILE_SHARE_URL",
-                                                            "value": "{FILE_SHARE_URL}"
+                                                            "name": "BLOB_CONTAINER_URL",
+                                                            "value": "{BLOB_CONTAINER_URL}"
                                                         },
                                                         {
                                                             "name": "REGION",
@@ -150,18 +150,7 @@
                                             }
                                         ],
                                         "osType": "Linux",
-                                        "restartPolicy": "OnFailure",
-                                        "volumes": [
-                                            {
-                                                "azureFile": {
-                                                    "readOnly": false,
-                                                    "shareName": "{FILE_SHARE_NAME}",
-                                                    "storageAccountKey": "{STORAGE_ACCOUNT_KEY}",
-                                                    "storageAccountName": "{STORAGE_ACCOUNT_NAME}"
-                                                },
-                                                "name": "{FILE_SHARE_NAME}volume"
-                                            }
-                                        ]
+                                        "restartPolicy": "OnFailure"
                                     }
                                 },
                                 "host": {
