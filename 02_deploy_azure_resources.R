@@ -1,8 +1,8 @@
 
 # 02_deploy_azure_resources.R
 # 
-# This script sets up Azure resources including the Batch cluster and the file
-# share where the data will be stored. The original dataset replicated from 11
+# This script sets up Azure resources including the Batch cluster and the blob
+# container where the data will be stored. The original dataset replicated from 11
 # SKUs of one product to 1000 SKUs of 90 products. The docker image to be 
 # deployed on each cluster node is defined and pushed to your Docker Hub account.
 #
@@ -15,7 +15,7 @@
 
 # Enter resource settings ------------------------------------------------------
 
-FILE_SHARE_NAME <- ""         # e.g. bffs
+BLOB_CONTAINER_NAME <- ""     # e.g. bfbc
 CLUSTER_NAME <- ""            # e.g. bfcl
 WORKER_CONTAINER_IMAGE <- ""  # e.g. <your-docker-id>/bfworker
 VM_SIZE <- ""                 # e.g. Standard_DS2_v2
@@ -42,7 +42,7 @@ run("touch .env")
 
 # Set R environment variables and add to .env file
 
-setenv("FILE_SHARE_NAME", FILE_SHARE_NAME)
+setenv("BLOB_CONTAINER_NAME", BLOB_CONTAINER_NAME)
 setenv("CLUSTER_NAME", CLUSTER_NAME)
 setenv("WORKER_CONTAINER_IMAGE", WORKER_CONTAINER_IMAGE)
 setenv("VM_SIZE", VM_SIZE)
@@ -71,10 +71,10 @@ setenv(
 setenv("STORAGE_ENDPOINT_SUFFIX", credentials$storageEndpointSuffix)
 setenv("BATCH_ACCOUNT_RESOURCE_ID", credentials$batchAccountResourceId)
 setenv("STORAGE_ACCOUNT_RESOURCE_ID", credentials$storageAccountResourceId)
-setenv("FILE_SHARE_URL",
+setenv("BLOB_CONTAINER_URL",
        paste0(
          "https://", Sys.getenv("STORAGE_ACCOUNT_NAME"),
-         ".file.core.windows.net/", Sys.getenv("FILE_SHARE_NAME"), "/"
+         ".blob.core.windows.net/", Sys.getenv("BLOB_CONTAINER_NAME"), "/"
        )
 )
 
@@ -97,20 +97,6 @@ setenv(
 )
 
 
-# Create file share and directory structure ------------------------------------
-
-fs <- create_file_share(
-  Sys.getenv("FILE_SHARE_URL"),
-  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
-)
-
-create_azure_dir(fs, "models")
-create_azure_dir(fs, "data")
-create_azure_dir(fs, file.path("data", "futurex"))
-create_azure_dir(fs, file.path("data", "history"))
-create_azure_dir(fs, file.path("data", "forecasts"))
-
-
 # Replicate data ---------------------------------------------------------------
 
 # Factor by which to replicate products. Expand to 1000 SKUs from 90 products
@@ -123,29 +109,16 @@ for (m in 2:multiplier) {
 }
 
 
-# Upload data to File Share
+# Create Blob container and upload resources -----------------------------------
 
-multiupload_azure_file(
-  fs,
-  src = "data/history/*",
-  dest = "data/history"
+cont <- create_blob_container(
+  Sys.getenv("BLOB_CONTAINER_URL"),
+  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
 )
 
-
-multiupload_azure_file(
-  fs,
-  src = "data/futurex/*",
-  dest = "data/futurex"
-)
-
-
-# Transfer pre-trained forecasting models to File Share ------------------------
-
-multiupload_azure_file(
-  fs,
-  src = "models/*",
-  dest = "models"
-)
+multiupload_blob(cont, src = "data/history/*", dest = "data/history")
+multiupload_blob(cont, src = "data/futurex/*", dest = "data/futurex")
+multiupload_blob(cont, src = "models/*", dest = "models")
 
 
 # Build worker docker image ----------------------------------------------------
@@ -182,19 +155,6 @@ doAzureParallel::setCredentials("azure/credentials.json")
 
 create_cluster_json <- function(save_dir = "azure") {
   
-  mount_str <- paste(
-    "mount -t cifs //%s.file.core.windows.net/%s /mnt/batch/tasks/shared/files",
-    "-o vers=3.0,username=%s,password=%s,dir_mode=0777,file_mode=0777,sec=ntlmssp"
-  )
-  mount_cmd <- sprintf(
-    mount_str,
-    Sys.getenv("STORAGE_ACCOUNT_NAME"),
-    Sys.getenv("FILE_SHARE_NAME"),
-    Sys.getenv("STORAGE_ACCOUNT_NAME"),
-    Sys.getenv("STORAGE_ACCOUNT_KEY")
-  )
-  cmd_line <- c("mkdir /mnt/batch/tasks/shared/files", mount_cmd)
-  
   config <- list(
     name = Sys.getenv("CLUSTER_NAME"),
     vmSize = Sys.getenv("VM_SIZE"),
@@ -211,7 +171,7 @@ create_cluster_json <- function(save_dir = "azure") {
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
     containerImage = Sys.getenv("WORKER_CONTAINER_IMAGE"),
-    commandLine = cmd_line
+    commandLine = c()
   )
   
   config_json <- toJSON(config, auto_unbox = TRUE, pretty = TRUE)

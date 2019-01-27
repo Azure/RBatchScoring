@@ -86,18 +86,39 @@ write_function <- function(fn, file) {
 }
 
 
-load_model <- function(name, path) {
-  list(name = name, model = readRDS(file.path(path, name)))
+download_blob_file <- function(f, cont) {
+  tmpfile <- tempfile()
+  download_blob(cont, src = f, dest = tmpfile)
+  tmpfile
 }
 
 
-load_models <- function(path = "models") {
+upload_blob_file <- function(x, f, cont, ...) {
+  tmpfile <- tempfile()
+  write.csv(x, tmpfile, ...)
+  upload_blob(cont, src = tmpfile, dest = f)
+}
+
+
+load_model <- function(name, path, cont = NULL) {
+  
+  f <- file.path(path, name)
+  if (!is.null(cont)) {
+    tmpfile <- download_blob_file(f, cont)
+    f <- tmpfile
+  }
+  list(name = name, model = readRDS(f))
+  
+}
+
+
+load_models <- function(path = "models", cont = NULL) {
   
   model_names <-list_model_names(
     list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
   )
   
-  models <- lapply(model_names, load_model, path)
+  models <- lapply(model_names, load_model, path, cont)
   names(models) <- model_names
   models
   
@@ -116,3 +137,4 @@ delete_all_jobs <- function() {
   job_ids <- jobs$Id
   lapply(job_ids, deleteJob)
 }
+

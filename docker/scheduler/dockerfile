@@ -3,6 +3,8 @@ FROM rocker/tidyverse:3.5.1
 
 RUN R -e "devtools::install_github('Azure/rAzureBatch')"
 RUN R -e "devtools::install_github('Azure/doAzureParallel')"
+RUN r -e 'devtools::install_github("cloudyr/AzureStor", \
+  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782")'
 RUN install2.r --error dotenv jsonlite
 
 WORKDIR /job

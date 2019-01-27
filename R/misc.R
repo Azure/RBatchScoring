@@ -5,7 +5,7 @@ run("ls -l ../bffs/data/forecasts | wc -l")
 run("ls ../bffs/data/forecasts")
 
 
-job <-"job20190111092554"
+job <-"job20190127214222"
 
 getJobFile(job, "1", "wd/1.txt")
 getJobFile(job, "1", "stderr.txt")
