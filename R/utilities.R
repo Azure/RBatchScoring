@@ -138,3 +138,15 @@ delete_all_jobs <- function() {
   lapply(job_ids, deleteJob)
 }
 
+
+delete_cluster <- function(cluster) {
+  stopCluster(cluster)
+  print("Waiting for cluster deletion..")
+  status <- "deleting"
+  while(!is.null(status)) {
+    Sys.sleep(5)
+    clusters <- getClusterList()
+    status <- clusters[clusters$Id == Sys.getenv("CLUSTER_NAME")]$State
+  }
+  print("Cluster deleted")
+}

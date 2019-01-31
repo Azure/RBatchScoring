@@ -112,7 +112,7 @@ foreach(
 
 # Delete the cluster
 
-stopCluster(clust)
+delete_cluster(clust)
 
 
 # Plot results to validate
