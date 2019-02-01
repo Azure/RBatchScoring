@@ -11,6 +11,7 @@
 library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
+library(AzureStor)
 
 source("R/utilities.R")
 source("R/options.R")
@@ -39,6 +40,7 @@ clust <- makeCluster("azure/cluster.json")
 
 
 # Register the cluster as the doAzureParallel backend
+
 registerDoAzureParallel(clust)
 
 print(paste("Cluster has", getDoParWorkers(), "nodes"))
@@ -47,24 +49,21 @@ azure_options <- list(
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE
 )
-file_dir <- "/mnt/batch/tasks/shared/files"
-pkgs_to_load <- c("dplyr", "gbm")
+
+pkgs_to_load <- c("dplyr", "gbm", "AzureStor")
 
 
-# Define which local objects should be exported to the job environment.
-
-vars_to_export <- c(
-  "dat",
-  "file_dir",
-  "required_models",
-  "QUANTILES",
-  "INTERACTION.DEPTH",
-  "N.MINOBSINNODE",
-  "N.TREES",
-  "SHRINKAGE"
-)
+# Load training data
 
 dat <- read.csv(file.path("data", "history", "product1.csv"))
+
+
+# Get reference to blob storage
+
+cont <- blob_container(
+  Sys.getenv("BLOB_CONTAINER_URL"),
+  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
+)
 
 
 # Train a single model per time step and quantile for steps 1 to 6. Then train
@@ -82,8 +81,9 @@ result <- foreach(
   
   idx=1:length(required_models),
   .options.azure = azure_options,
-  .packages = pkgs_to_load,
-  .export = vars_to_export) %dopar% {
+  .packages = pkgs_to_load
+  
+  ) %dopar% {
                     
     step <- required_models[[idx]]$step
     quantile <- required_models[[idx]]$quantile
@@ -120,7 +120,9 @@ result <- foreach(
     
     name <- paste0("gbm_t", as.character(step), "_q",
                    as.character(quantile * 100))
-    saveRDS(model, file = file.path(file_dir, "models", name))
+    tmpfile <- tempfile()
+    saveRDS(model, file = tmpfile)
+    upload_blob(cont, src = tmpfile, dest = paste0("models/", name))
     
     
     # Return arbitrary result
@@ -132,11 +134,13 @@ result <- foreach(
 
 # Overwrite model files locally
 
-if (interactive()) {
-  run(
-    "azcopy --source %s --destination %s --source-key %s --quiet --recursive",
-    paste0(Sys.getenv("FILE_SHARE_URL"), "models"),
-    "models",
-    Sys.getenv("STORAGE_ACCOUNT_KEY")
-  )
-}
+multidownload_blob(
+  cont,
+  src = "models/*",
+  dest = "models"
+)
+
+
+# Delete the cluster
+
+delete_cluster(clust)
