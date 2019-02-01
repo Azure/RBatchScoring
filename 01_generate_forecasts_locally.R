@@ -78,7 +78,7 @@ dat %>%
 create_dir("models")
 
 cont <- blob_container("https://happypathspublic.blob.core.windows.net/assets")
-list_blobs(cont)
+
 multidownload_blob(
   cont,
   src = "/batch_forecasting/models/*",
