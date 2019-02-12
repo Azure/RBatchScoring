@@ -67,13 +67,11 @@ get_env_var_list <- function() {
 }
 
 
-run <- function(cmd, ..., test = FALSE) {
+run <- function(cmd, ..., test = FALSE, intern = FALSE) {
   args <- list(...)
   print(do.call(sprintf, c(cmd, args)))
   if (!test) {
-    system(
-      do.call(sprintf, c(cmd, args))
-    )
+    system(do.call(sprintf, c(cmd, args)), intern = intern)
   }
 }
 

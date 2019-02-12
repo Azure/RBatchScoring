@@ -59,16 +59,48 @@
                                                 "properties": {
                                                     "environmentVariables": [
                                                         {
+                                                            "name": "SUBSCRIPTION_ID",
+                                                            "value": "{SUBSCRIPTION_ID}"
+                                                        },
+                                                        {
+                                                            "name": "TENANT_ID",
+                                                            "value": "{TENANT_ID}"
+                                                        },
+                                                        {
+                                                            "name": "SERVICE_PRINCIPAL_NAME",
+                                                            "value": "{SERVICE_PRINCIPAL_NAME}"
+                                                        },
+                                                        {
+                                                            "name": "REGION",
+                                                            "value": "{REGION}"
+                                                        },
+                                                        {
+                                                            "name": "RESOURCE_GROUP",
+                                                            "value": "{RESOURCE_GROUP}"
+                                                        },
+                                                        {
+                                                            "name": "BATCH_ACCOUNT_NAME",
+                                                            "value": "{BATCH_ACCOUNT_NAME}"
+                                                        },
+                                                        {
+                                                            "name": "STORAGE_ACCOUNT_NAME",
+                                                            "value": "{STORAGE_ACCOUNT_NAME}"
+                                                        },
+                                                        {
                                                             "name": "BLOB_CONTAINER_NAME",
                                                             "value": "{BLOB_CONTAINER_NAME}"
                                                         },
                                                         {
-                                                            "name": "CLUSTER_NAME",
-                                                            "value": "{CLUSTER_NAME}"
+                                                            "name": "LOGIC_APP_NAME",
+                                                            "value": "{LOGIC_APP_NAME}"
                                                         },
                                                         {
-                                                            "name": "WORKER_CONTAINER_IMAGE",
-                                                            "value": "{WORKER_CONTAINER_IMAGE}"
+                                                            "name": "ACI_NAME",
+                                                            "value": "{ACI_NAME}"
+                                                        },
+                                                        {
+                                                            "name": "CLUSTER_NAME",
+                                                            "value": "{CLUSTER_NAME}"
                                                         },
                                                         {
                                                             "name": "VM_SIZE",
@@ -79,64 +111,28 @@
                                                             "value": "{NUM_NODES}"
                                                         },
                                                         {
-                                                            "name": "RESOURCE_GROUP",
-                                                            "value": "{RESOURCE_GROUP}"
-                                                        },
-                                                        {
-                                                            "name": "TENANT_ID",
-                                                            "value": "{TENANT_ID}"
-                                                        },
-                                                        {
-                                                            "name": "SP_NAME",
-                                                            "value": "{SP_NAME}"
-                                                        },
-                                                        {
-                                                            "name": "SP_PASSWORD",
-                                                            "value": "{SP_PASSWORD}"
-                                                        },
-                                                        {
-                                                            "name": "SUBSCRIPTION_ID",
-                                                            "value": "{SUBSCRIPTION_ID}"
-                                                        },
-                                                        {
-                                                            "name": "STORAGE_ACCOUNT_NAME",
-                                                            "value": "{STORAGE_ACCOUNT_NAME}"
-                                                        },
-                                                        {
-                                                            "name": "STORAGE_ENDPOINT_SUFFIX",
-                                                            "value": "{STORAGE_ENDPOINT_SUFFIX}"
-                                                        },
-                                                        {
-                                                            "name": "BATCH_ACCOUNT_RESOURCE_ID",
-                                                            "value": "{BATCH_ACCOUNT_RESOURCE_ID}"
-                                                        },
-                                                        {
-                                                            "name": "STORAGE_ACCOUNT_RESOURCE_ID",
-                                                            "value": "{STORAGE_ACCOUNT_RESOURCE_ID}"
-                                                        },
-                                                        {
-                                                            "name": "BLOB_CONTAINER_URL",
-                                                            "value": "{BLOB_CONTAINER_URL}"
-                                                        },
-                                                        {
-                                                            "name": "REGION",
-                                                            "value": "{REGION}"
-                                                        },
-                                                        {
-                                                            "name": "STORAGE_ACCOUNT_KEY",
-                                                            "value": "{STORAGE_ACCOUNT_KEY}"
+                                                            "name": "WORKER_CONTAINER_IMAGE",
+                                                            "value": "{WORKER_CONTAINER_IMAGE}"
                                                         },
                                                         {
                                                             "name": "SCHEDULER_CONTAINER_IMAGE",
                                                             "value": "{SCHEDULER_CONTAINER_IMAGE}"
                                                         },
                                                         {
-                                                            "name": "LOGIC_APP_NAME",
-                                                            "value": "{LOGIC_APP_NAME}"
+                                                            "name": "SERVICE_PRINCIPAL_APPID",
+                                                            "value": "{SERVICE_PRINCIPAL_APPID}"
                                                         },
                                                         {
-                                                            "name": "ACI_NAME",
-                                                            "value": "{ACI_NAME}"
+                                                            "name": "SERVICE_PRINCIPAL_CRED",
+                                                            "value": "{SERVICE_PRINCIPAL_CRED}"
+                                                        },
+                                                        {
+                                                            "name": "STORAGE_ACCOUNT_KEY",
+                                                            "value": "{STORAGE_ACCOUNT_KEY}"
+                                                        },
+                                                        {
+                                                            "name": "BLOB_CONTAINER_URL",
+                                                            "value": "{BLOB_CONTAINER_URL}"
                                                         }
                                                     ],
                                                     "image": "{SCHEDULER_CONTAINER_IMAGE}",

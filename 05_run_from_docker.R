@@ -12,17 +12,10 @@
 # Run time ~5 minutes on a 5 node cluster
 
 
-# Enter resource settings ------------------------------------------------------
-
-SCHEDULER_CONTAINER_IMAGE <- "" # e.g. <your-docker-id>/bfscheduler
-
-
 # Define docker image ----------------------------------------------------------
 
 library(dotenv)
 source("R/utilities.R")
-
-setenv("SCHEDULER_CONTAINER_IMAGE", SCHEDULER_CONTAINER_IMAGE)
 
 
 # Review the scheduler docker image

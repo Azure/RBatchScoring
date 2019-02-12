@@ -13,15 +13,6 @@
 # Run time ~4 minutes
 
 
-# Enter resource settings ------------------------------------------------------
-
-BLOB_CONTAINER_NAME <- ""     # e.g. bfbc
-CLUSTER_NAME <- ""            # e.g. bfcl
-WORKER_CONTAINER_IMAGE <- ""  # e.g. <your-docker-id>/bfworker
-VM_SIZE <- ""                 # e.g. Standard_DS2_v2
-NUM_NODES <- ""               # e.g. 5
-
-
 # Set environment variables ----------------------------------------------------
 
 library(dotenv)
@@ -32,45 +23,47 @@ library(AzureStor)
 
 source("R/options.R")
 source("R/utilities.R")
+source("R/set_environment_variables.R")
 source("R/create_cluster_json.R")
+source("R/create_credentials_json.R")
+
+set_environment_variables()
 
 
-# Create a .env file to hold secrets
 
-run("touch .env")
+# Create resources with Azure CLI ----------------------------------------------
 
+# Create resource group
 
-# Set R environment variables and add to .env file
-
-setenv("BLOB_CONTAINER_NAME", BLOB_CONTAINER_NAME)
-setenv("CLUSTER_NAME", CLUSTER_NAME)
-setenv("WORKER_CONTAINER_IMAGE", WORKER_CONTAINER_IMAGE)
-setenv("VM_SIZE", VM_SIZE)
-setenv("NUM_NODES", NUM_NODES)
+run("az group create --name %s --location %s",
+    Sys.getenv("RESOURCE_GROUP"), Sys.getenv("REGION"))
 
 
-# Get env variables from doAzureParallel credentials file
+# Create storage account
 
-credentials <- fromJSON(file.path("azure", "credentials.json"))$servicePrincipal
+run(
+  paste("az storage account create",
+        "--kind BlobStorage --sku Standard_LRS --access-tier Hot",
+        "--name %s --resource-group %s --location %s"),
+  Sys.getenv("STORAGE_ACCOUNT_NAME"),
+  Sys.getenv("RESOURCE_GROUP"),
+  Sys.getenv("REGION")
+)
+
+
+# Retrieve storage account key
 
 setenv(
-  "RESOURCE_GROUP",
-  unlist(strsplit(credentials$batchAccountResourceId, "/"))[[5]]
+  "STORAGE_ACCOUNT_KEY",
+  fromJSON(
+    run("az storage account keys list --account-name %s --query [0].value",
+        Sys.getenv("STORAGE_ACCOUNT_NAME"), intern = TRUE)
+  )
 )
-setenv("TENANT_ID", credentials$tenantId)
-setenv("SP_NAME", credentials$clientId)
-setenv("SP_PASSWORD", credentials$credential)
-setenv(
-  "SUBSCRIPTION_ID",
-  unlist(strsplit(credentials$batchAccountResourceId, "/"))[[3]]
-)
-setenv(
-  "STORAGE_ACCOUNT_NAME",
-  unlist(strsplit(credentials$storageAccountResourceId, "/"))[[9]]
-)
-setenv("STORAGE_ENDPOINT_SUFFIX", credentials$storageEndpointSuffix)
-setenv("BATCH_ACCOUNT_RESOURCE_ID", credentials$batchAccountResourceId)
-setenv("STORAGE_ACCOUNT_RESOURCE_ID", credentials$storageAccountResourceId)
+
+
+# Construct blob container URL
+
 setenv("BLOB_CONTAINER_URL",
        paste0(
          "https://", Sys.getenv("STORAGE_ACCOUNT_NAME"),
@@ -79,22 +72,32 @@ setenv("BLOB_CONTAINER_URL",
 )
 
 
-# Get env variables from resource group / storage account
+# Create batch account
 
-az <- az_rm$new(
-  tenant = Sys.getenv("TENANT_ID"),
-  app = Sys.getenv("SP_NAME"),
-  password = Sys.getenv("SP_PASSWORD")
+run(
+  paste("az batch account create",
+        "--name %s --resource-group %s --location %s --storage-account %s"),
+  Sys.getenv("BATCH_ACCOUNT_NAME"), Sys.getenv("RESOURCE_GROUP"),
+  Sys.getenv("REGION"), Sys.getenv("STORAGE_ACCOUNT_NAME")
 )
 
-az_sub <- az$get_subscription(Sys.getenv("SUBSCRIPTION_ID"))
-rg <- az_sub$get_resource_group(Sys.getenv("RESOURCE_GROUP"))
 
-setenv("REGION", rg$location)
-setenv(
-  "STORAGE_ACCOUNT_KEY",
-  rg$get_storage_account(Sys.getenv("STORAGE_ACCOUNT_NAME"))$list_keys()[[1]]
+# Create service principal and retrieve credentials
+
+sp_credentials <- run(
+    paste("az ad sp create-for-rbac",
+          "--name %s --subscription %s --scopes %s"),
+    paste0("https://", Sys.getenv("SERVICE_PRINCIPAL_NAME")),
+    Sys.getenv("SUBSCRIPTION_ID"),
+    paste0("/subscriptions/", Sys.getenv("SUBSCRIPTION_ID"),
+            "/resourceGroups/", Sys.getenv("RESOURCE_GROUP")),
+    intern = TRUE
 )
+sp_credentials <- fromJSON(sp_credentials)
+print(sp_credentials)
+
+setenv("SERVICE_PRINCIPAL_APPID", sp_credentials$appId)
+setenv("SERVICE_PRINCIPAL_CRED", sp_credentials$password)
 
 
 # Replicate data ---------------------------------------------------------------
@@ -146,6 +149,11 @@ run("docker push %s", Sys.getenv("WORKER_CONTAINER_IMAGE"))
 
 # Define cluster ---------------------------------------------------------------
 
+# Create json file to store doAzureParallel credentials
+
+create_credentials_json()
+
+
 # Set doAzureParallel credentials
 
 doAzureParallel::setCredentials("azure/credentials.json")
@@ -183,4 +191,3 @@ create_cluster_json <- function(save_dir = "azure") {
 write_function(create_cluster_json, "R/create_cluster_json.R")
 
 create_cluster_json(save_dir = "azure")
-

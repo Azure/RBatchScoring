@@ -17,21 +17,12 @@
 # Run time ~6 minutes on a 5 node cluster
 
 
-# Enter resource settings ------------------------------------------------------
-
-LOGIC_APP_NAME <- ""  # e.g. bfla
-ACI_NAME <- ""        # e.g. bfaci
-
-
 # Deploy Logic App -------------------------------------------------------------
 
 library(dotenv)
 library(jsonlite)
 library(AzureRMR)
 source("R/utilities.R")
-
-setenv("LOGIC_APP_NAME", LOGIC_APP_NAME)
-setenv("ACI_NAME", ACI_NAME)
 
 
 # Insert resource names and environment variables into json template
@@ -89,13 +80,4 @@ run("az container logs --resource-group %s --name %s",
 
 # Delete the resource group
 
-rg <- az_rm$new(
-    tenant = Sys.getenv("TENANT_ID"),
-    app = Sys.getenv("SP_NAME"),
-    password = Sys.getenv("SP_PASSWORD")
-  )$
-  get_subscription(Sys.getenv("SUBSCRIPTION_ID"))$
-  get_resource_group(Sys.getenv("RESOURCE_GROUP"))
-
-rg$delete()
-
+run("az group delete --name %s --yes", Sys.getenv("RESOURCE_GROUP"))
