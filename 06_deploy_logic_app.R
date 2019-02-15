@@ -81,3 +81,8 @@ run("az container logs --resource-group %s --name %s",
 # Delete the resource group
 
 run("az group delete --name %s --yes", Sys.getenv("RESOURCE_GROUP"))
+
+
+# Delete the service principal
+
+run("az ad sp delete --id %s", Sys.getenv("SERVICE_PRINCIPAL_APPID"))
