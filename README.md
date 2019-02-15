@@ -8,28 +8,26 @@ In this repository, we use the scenario of product sales forecasting to demonstr
 ![Reference Architecture Diagram](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/architecture.png)
 
 The above architecture works as follows:
-1. A Logic App triggers an Azure Container Instance (ACI) on a schedule
-2. The ACI uses the doAzureParallel R package to create multiple jobs running on an Azure Batch cluster
-3. Each job reads input data from from a File Share mounted on each node of the cluster and generates a forecast using pre-trained R models
-4. The forecast results are then written back to the File Share
+1. Model scoring is parallelized across a cluster of virtual machines running on Azure Batch.
+2. Each Batch job reads input data from a Blob container, makes a prediction using pre-trained R models, and writes the results back to the Blob container.
+3. Batch jobs are triggered by a scheduler script using the doAzureParallel R package. The script runs on an Azure Container Instance (ACI).
+4. The ACI is run on a schedule managed by a Logic App.
 
-### Forecasting scenario
+## Forecasting scenario
+
+This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can carry tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. In this example, we generate forecasts for 1,000 products across 83 stores, resuling in 5.4 million scoring operations. The architecture deployed is capable of scaling to this challenge. See [here](./forecasting_scenario.md) for more details of the forecasting scenario.
+
 ![Product sales forecasting](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/forecasts.png)
-
-This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can typically carry many tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. This example uses the Orange Juice dataset from the *bayesm* R package which consists of just over two years' worth of weekly sales data for 11 orange juice SKUs (stock keeping units) across 83 stores. The data includes covariates including the price of each product, whether the product was on a deal or was featured in the store in each week. We expand this data through replication, resulting in 1,000 SKUs across 83 stores. We show how trained GBM models (from the *gbm* R package) can be used to generate quantile forecasts with a forecast horizon of 13 weeks (1 quarter). Quantile forecasts allow for the uncertainty in the forecast to be estimated and in this example we generate five quantiles (the 5th, 25th, 50th, 75th and 95th percentiles). The total number of model scoring operations is 1,000 SKUs x 83 stores x 13 weeks x 5 quantiles = 5.4 million. A large retail store could carry many times this number of products but this architecture is capable of scaling to this challenge.
 
 ## Prerequisites
 
-This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with all the local/working machine dependencies pre-installed.
+This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with manay of the local/working machine dependencies pre-installed.
 
 Local/Working Machine:
 - Ubuntu >=16.04LTS (not tested on Mac or Windows)
 - R >= 3.4.3
-- [RStudio Server](https://www.rstudio.com/products/rstudio/download-server/) >=1.1.4 (recommended but other IDEs can be used)
-- [Anaconda](https://www.anaconda.com/download/#linux) >=1.6.14
 - [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0
-- [AzCopy](https://docs.microsoft.com/azure/storage/common/storage-use-azcopy-linux?toc=%2fazure%2fstorage%2ffiles%2ftoc.json) >=7.0.0
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) >=2.0
+- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0
 
 R packages*:
 - gbm >=2.1.4.9000
@@ -48,10 +46,10 @@ R packages*:
 \* Install all R package dependencies by running `Rscript R/install_dependencies.R`
 
 Accounts:
-- [Dockerhub account](https://hub.docker.com/)
 - [Azure Subscription](https://azure.microsoft.com/free/)
+- [Dockerhub account](https://hub.docker.com/)
 
-While it is not required, it is also useful to use the [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) to inspect your storage account. Alternatively, you can mount the File Share to your local machine.
+While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) is useful to inspect your storage account.
 
 ## Setup
 
@@ -59,14 +57,7 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
 4. Log in to Azure using the Azure CLI `az login`
-5. Setup resources for doAzureParallel using service principal. It is recommended you run these commands using the (bash) [Azure Cloud Shell](https://shell.azure.com).  You will be asked to provide names for several resources. Do not deploy resources in an existing resource group. **Retain the json output of these commands for the next step**
-    ```
-    wget -q https://raw.githubusercontent.com/Azure/doAzureParallel/master/account_setup.sh &&
-    chmod 755 account_setup.sh &&
-    /bin/bash account_setup.sh serviceprincipal
-    ```
-6. Create credentials file and paste the json output of the above command into the file `touch azure/credentials.json`
-7. Log in to Docker using the docker cli `docker login`
+7. Log in to Docker `docker login`
 8. Enable non-root users to run docker commands
     ```
     sudo groupadd docker
@@ -74,10 +65,9 @@ While it is not required, it is also useful to use the [Azure Storage Explorer](
     ```
     Restart your terminal after running the above commands
 
+## Deployment steps
 
-## Steps:
-
-Run through the following R scripts (ideally from R Studio). It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/BatchForecasting")`. It is recommended that you restart your R session and clear the R environment before running each script.
+Run through the following R scripts. It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/RBatchScoring")`. It is recommended that you restart your R session and clear the R environment before running each script.
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
 3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
