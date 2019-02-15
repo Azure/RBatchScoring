@@ -5,7 +5,7 @@
 In this repository, we use the scenario of product sales forecasting to demonstrate the recommended approach for batch scoring with R models on Azure. This architecture can be generalized for any scenario involving batch scoring using R models.
 
 ## Design
-![Reference Architecture Diagram](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/architecture.png)
+![Reference Architecture Diagram](./images/architecture.png)
 
 The above architecture works as follows:
 1. Model scoring is parallelized across a cluster of virtual machines running on Azure Batch.
@@ -15,9 +15,9 @@ The above architecture works as follows:
 
 ## Forecasting scenario
 
-This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can carry tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. In this example, we generate forecasts for 1,000 products across 83 stores, resuling in 5.4 million scoring operations. The architecture deployed is capable of scaling to this challenge. See [here](./forecasting_scenario.md) for more details of the forecasting scenario.
+This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can carry tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. In this example, we generate forecasts for 1,000 products across 83 stores, resuling in 5.4 million scoring operations. The architecture deployed is capable of scaling to this challenge. See [here](forecasting_scenario.md) for more details of the forecasting scenario.
 
-![Product sales forecasting](https://happypathspublic.blob.core.windows.net/assets/batch_forecasting/images/forecasts.png)
+![Product sales forecasting](./images/forecasts.png)
 
 ## Prerequisites
 
