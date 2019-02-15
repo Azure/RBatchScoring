@@ -1,11 +1,19 @@
 # Dockerfile for the scheduler image
+
 FROM rocker/tidyverse:3.5.1
 
-RUN R -e "devtools::install_github('Azure/rAzureBatch')"
-RUN R -e "devtools::install_github('Azure/doAzureParallel')"
+RUN R -e 'devtools::install_github("Azure/rAzureBatch", \
+  ref = "6ca2bf7b1f4433a27531eaa86f0317499e9b4987")'
+
+RUN R -e 'devtools::install_github("Azure/doAzureParallel", \
+  ref = "975858072e8194d465a1f63262e35815ebbf0306")'
+
 RUN r -e 'devtools::install_github("cloudyr/AzureStor", \
-  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782")'
-RUN install2.r --error dotenv jsonlite
+  ref = "7d7f03c9d64bed0a076a63437117b21958e75bf9")'
+  
+RUN install2.r --error --repos https://mran.microsoft.com/snapshot/2019-01-07 \
+  dotenv \
+  jsonlite
 
 WORKDIR /job
 ADD R /job/R

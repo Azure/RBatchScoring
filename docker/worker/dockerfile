@@ -10,7 +10,7 @@ RUN r -e 'devtools::install_github("gbm-developers/gbm", \
   ref = "b59270a787202d7ba2de5f2af7032854691d2b10")'
   
 RUN r -e 'devtools::install_github("cloudyr/AzureStor", \
-  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782")'
+  ref = "7d7f03c9d64bed0a076a63437117b21958e75bf9")'
 
 WORKDIR /job
 
