@@ -2,13 +2,11 @@
 # 02_deploy_azure_resources.R
 # 
 # This script sets up Azure resources including the Batch cluster and the blob
-# container where the data will be stored. The original dataset replicated from 11
-# SKUs of one product to 1000 SKUs of 90 products. The docker image to be 
+# container where the data will be stored. The original dataset is replicated 
+# from 11 SKUs of one product to 1000 SKUs of 90 products. The docker image to be 
 # deployed on each cluster node is defined and pushed to your Docker Hub account.
 #
-# Note: you must have run the setup script for doAzureParallel using
-# service principal deployment and copied the output to azure/credentials.json.
-# Additionally, you must have logged in to your Docker Hub account.
+# Note: you must have logged in to your Docker Hub account and the Azure CLI.
 #
 # Run time ~4 minutes
 
@@ -18,7 +16,6 @@
 library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
-library(AzureRMR)
 library(AzureStor)
 
 source("R/options.R")

@@ -2,8 +2,8 @@
 # 01_generate_forecasts_locally.R
 # 
 # This script extracts product sales data from the bayesm R package. The data
-# consists of weekly sales of 11 orange juice brands across 83 stores. This
-# script generates forecasts for these products using pre-trained models.
+# consists of weekly sales of 11 orange juice brands across 83 stores. Forecasts
+# are generated for these products using pre-trained models.
 #
 # Run time ~2 minutes
 
