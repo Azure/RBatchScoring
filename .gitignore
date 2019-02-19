@@ -5,5 +5,4 @@ azure/credentials.json
 azure/logic_app.json
 azure/cluster.json
 azure/credentials.json
-forecasts.png
 .env

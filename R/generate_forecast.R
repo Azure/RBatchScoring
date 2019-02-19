@@ -1,15 +1,15 @@
-generate_forecast <- function(product,
+generate_forecast <- function(futurex,
+                              history,
                               models,
-                              file_dir = ".",
                               transform_predictions = TRUE) {
   
   # Generates quantile forecasts with a horizon of 13 weeks for each sku of
   # a product.
   #
   # Args:
-  #   product: the product ID
+  #   futurex: feature dataset for forecast period
+  #   history: sales history for all SKUs
   #   models: a list of trained gbm models for each time step and quantile
-  #   file_dir: relative or absolute path to the directory where data are stored
   #   transform_predictions: transform the forecast from log sales to sales
   #
   # Returns:
@@ -78,31 +78,17 @@ generate_forecast <- function(product,
     cbind(step_features, quantile_forecasts)
     
   }
- 
-   
-  # Read product sales history
-  
-  history <- read.csv(
-    file.path(file_dir, "data", "history",
-              paste0("product", product, ".csv"))
-    ) %>%
-    select(sku, store, week, sales)
   
   
-  # Read features for future time steps
+  # Combine futurex and history into one feature dataset
   
-  futurex <- read.csv(
-    file.path(file_dir, "data", "futurex",
-              paste0("product", product, ".csv"))
-  )
+  features <- bind_rows(futurex, history)
   
-  forecast_start_week <- min(futurex$week)
-  
-  features <- bind_rows(futurex, history) 
   
   # Generate forecasts over the 13 steps of the forecast period
   
   steps <- 1:FORECAST_HORIZON
+  forecast_start_week <- min(futurex$week)
   
   step_forecasts <- lapply(steps, generate_step_forecasts)
   

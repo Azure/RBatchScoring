@@ -7,9 +7,19 @@ install.packages(basic_pkgs)
 
 repo <- "https://mran.microsoft.com/snapshot/2019-01-07"
 
-pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2", "AzureRMR", "AzureStor")
+pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2")
 
 install.packages(pkgs, repos = repo)
+
+devtools::install_github(
+  "cloudyr/AzureRMR",
+  ref = "5b54604ca63e5e0154318f04cc1056f8f946fcde"
+)
+
+devtools::install_github(
+  "cloudyr/AzureStor",
+  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782"
+)
 
 devtools::install_github(
   "Azure/rAzureBatch",

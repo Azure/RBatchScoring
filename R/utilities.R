@@ -67,13 +67,11 @@ get_env_var_list <- function() {
 }
 
 
-run <- function(cmd, ..., test = FALSE) {
+run <- function(cmd, ..., test = FALSE, intern = FALSE) {
   args <- list(...)
   print(do.call(sprintf, c(cmd, args)))
   if (!test) {
-    system(
-      do.call(sprintf, c(cmd, args))
-    )
+    system(do.call(sprintf, c(cmd, args)), intern = intern)
   }
 }
 
@@ -86,18 +84,39 @@ write_function <- function(fn, file) {
 }
 
 
-load_model <- function(name, path) {
-  list(name = name, model = readRDS(file.path(path, name)))
+download_blob_file <- function(f, cont) {
+  tmpfile <- tempfile()
+  download_blob(cont, src = f, dest = tmpfile)
+  tmpfile
 }
 
 
-load_models <- function(path = "models") {
+upload_blob_file <- function(x, f, cont, ...) {
+  tmpfile <- tempfile()
+  write.csv(x, tmpfile, ...)
+  upload_blob(cont, src = tmpfile, dest = f)
+}
+
+
+load_model <- function(name, path, cont = NULL) {
+  
+  f <- file.path(path, name)
+  if (!is.null(cont)) {
+    tmpfile <- download_blob_file(f, cont)
+    f <- tmpfile
+  }
+  list(name = name, model = readRDS(f))
+  
+}
+
+
+load_models <- function(path = "models", cont = NULL) {
   
   model_names <-list_model_names(
     list_required_models(lagged_feature_steps = 6, quantiles = QUANTILES)
   )
   
-  models <- lapply(model_names, load_model, path)
+  models <- lapply(model_names, load_model, path, cont)
   names(models) <- model_names
   models
   
@@ -115,4 +134,17 @@ delete_all_jobs <- function() {
   jobs <- getJobList()
   job_ids <- jobs$Id
   lapply(job_ids, deleteJob)
+}
+
+
+delete_cluster <- function(cluster) {
+  stopCluster(cluster)
+  print("Waiting for cluster deletion..")
+  status <- "deleting"
+  while(!is.null(status)) {
+    Sys.sleep(5)
+    clusters <- getClusterList()
+    status <- clusters[clusters$Id == Sys.getenv("CLUSTER_NAME")]$State
+  }
+  print("Cluster deleted")
 }

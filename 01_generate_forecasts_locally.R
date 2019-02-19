@@ -2,8 +2,8 @@
 # 01_generate_forecasts_locally.R
 # 
 # This script extracts product sales data from the bayesm R package. The data
-# consists of weekly sales of 11 orange juice brands across 83 stores. This
-# script generates forecasts for these products using pre-trained models.
+# consists of weekly sales of 11 orange juice brands across 83 stores. Forecasts
+# are generated for these products using pre-trained models.
 #
 # Run time ~2 minutes
 
@@ -11,6 +11,7 @@
 library(dplyr)
 library(gbm)
 library(ggplot2)
+library(AzureStor)
 
 source("R/utilities.R")
 source("R/options.R")
@@ -76,25 +77,21 @@ dat %>%
 
 create_dir("models")
 
-run(
-  "azcopy --source %s --destination %s --quiet --recursive",
-  file.path(
-    "https://happypathspublic.blob.core.windows.net",
-    "assets", "batch_forecasting", "models"
-  ),
-  "models"
+cont <- blob_container("https://happypathspublic.blob.core.windows.net/assets")
+
+multidownload_blob(
+  cont,
+  src = "/batch_forecasting/models/*",
+  dest = "models",
+  overwrite = TRUE
 )
+
 
 
 # List the downloaded models. Note that models for t7 (time step 7) will be
 # applied to all time steps from 7 to 13.
 
 list.files("models")
-
-
-# Load trained models
-
-models <- load_models()
 
 
 # Define function for creating model features
@@ -151,18 +148,18 @@ write_function(create_features, "R/create_features.R")
 
 # Define forecast scoring function
 
-generate_forecast <- function(product,
+generate_forecast <- function(futurex,
+                              history,
                               models,
-                              file_dir = ".",
                               transform_predictions = TRUE) {
   
   # Generates quantile forecasts with a horizon of 13 weeks for each sku of
   # a product.
   #
   # Args:
-  #   product: the product ID
+  #   futurex: feature dataset for forecast period
+  #   history: sales history for all SKUs
   #   models: a list of trained gbm models for each time step and quantile
-  #   file_dir: relative or absolute path to the directory where data are stored
   #   transform_predictions: transform the forecast from log sales to sales
   #
   # Returns:
@@ -231,31 +228,17 @@ generate_forecast <- function(product,
     cbind(step_features, quantile_forecasts)
     
   }
- 
-   
-  # Read product sales history
-  
-  history <- read.csv(
-    file.path(file_dir, "data", "history",
-              paste0("product", product, ".csv"))
-    ) %>%
-    select(sku, store, week, sales)
   
   
-  # Read features for future time steps
+  # Combine futurex and history into one feature dataset
   
-  futurex <- read.csv(
-    file.path(file_dir, "data", "futurex",
-              paste0("product", product, ".csv"))
-  )
+  features <- bind_rows(futurex, history)
   
-  forecast_start_week <- min(futurex$week)
-  
-  features <- bind_rows(futurex, history) 
   
   # Generate forecasts over the 13 steps of the forecast period
   
   steps <- 1:FORECAST_HORIZON
+  forecast_start_week <- min(futurex$week)
   
   step_forecasts <- lapply(steps, generate_step_forecasts)
   
@@ -267,9 +250,28 @@ generate_forecast <- function(product,
 write_function(generate_forecast, "R/generate_forecast.R")
 
 
+# Load trained models
+
+models <- load_models()
+
+
+# Load forecast period features and sales history data
+
+history <- read.csv(
+    file.path("data", "history",
+              paste0("product1.csv"))
+  ) %>%
+  select(sku, store, week, sales)
+  
+futurex <- read.csv(
+    file.path("data", "futurex",
+              paste0("product1.csv"))
+  )
+
+
 # Generate a forecast for all 11 SKUs of product 1
 
-forecasts <- generate_forecast(1, models)
+forecasts <- generate_forecast(futurex, history, models)
 
 
 # Plot the forecast output of four SKUs in one store
