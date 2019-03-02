@@ -19,6 +19,8 @@
 
 # Deploy Logic App -------------------------------------------------------------
 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 library(dotenv)
 library(jsonlite)
 library(AzureRMR)

@@ -7,6 +7,7 @@
 #
 # Run time ~30 minutes on a 5 node cluster
 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 library(dotenv)
 library(jsonlite)

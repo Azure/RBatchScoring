@@ -14,6 +14,9 @@
 
 # Define docker image ----------------------------------------------------------
 
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 library(dotenv)
 source("R/utilities.R")
 
