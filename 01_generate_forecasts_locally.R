@@ -307,5 +307,5 @@ dat %>%
   ) +
   labs(y = "sales") +
   ggtitle(paste("Forecasts for SKUs 1 to 4 in store 1")) +
-  ggsave("forecasts.png", device = "png", width = 7, height = 7)
+  ggsave("images/forecasts.png", device = "png", width = 7, height = 7)
 
