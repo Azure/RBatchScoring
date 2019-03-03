@@ -55,8 +55,8 @@ azure_options <- list(
 pkgs_to_load <- c("dplyr", "gbm", "AzureStor")
 
 cont <- blob_container(
-  Sys.getenv("BLOB_CONTAINER_URL"),
-  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
+  get_env("BLOB_CONTAINER_URL"),
+  key = get_env("STORAGE_ACCOUNT_KEY")
 )
 
 # Split product forecasts equally across nodes

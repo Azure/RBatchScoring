@@ -1,13 +1,13 @@
 create_cluster_json <- function(save_dir = "azure") {
   
   config <- list(
-    name = Sys.getenv("CLUSTER_NAME"),
-    vmSize = Sys.getenv("VM_SIZE"),
+    name = get_env("CLUSTER_NAME"),
+    vmSize = get_env("VM_SIZE"),
     maxTasksPerNode = 1,
     poolSize = list(
       dedicatedNodes = list(
-        min = as.integer(Sys.getenv("NUM_NODES")),
-        max = as.integer(Sys.getenv("NUM_NODES"))
+        min = as.integer(get_env("NUM_NODES")),
+        max = as.integer(get_env("NUM_NODES"))
       ),
       lowPriorityNodes = list(
         min = 0,
@@ -15,7 +15,7 @@ create_cluster_json <- function(save_dir = "azure") {
       ),
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
-    containerImage = Sys.getenv("WORKER_CONTAINER_IMAGE"),
+    containerImage = get_env("WORKER_CONTAINER_IMAGE"),
     commandLine = c()
   )
   

@@ -62,8 +62,8 @@ dat <- read.csv(file.path("data", "history", "product1.csv"))
 # Get reference to blob storage
 
 cont <- blob_container(
-  Sys.getenv("BLOB_CONTAINER_URL"),
-  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
+  get_env("BLOB_CONTAINER_URL"),
+  key = get_env("STORAGE_ACCOUNT_KEY")
 )
 
 

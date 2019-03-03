@@ -34,10 +34,10 @@ logic_app_json <- readChar(file_name, file.info(file_name)$size)
 
 replace_vars <- function(var_name) {
   pattern <- paste0("\\{", var_name, "\\}")
-  gsub(pattern, Sys.getenv(var_name), logic_app_json)
+  gsub(pattern, get_env(var_name), logic_app_json)
 }
 
-vars <- get_env_var_list()
+vars <- get_dotenv_vars()
 
 for (var in vars) {
   logic_app_json <- replace_vars(var)
@@ -54,8 +54,8 @@ run(
     "--name %s",
     "--resource-group %s",
     "--template-file %s"),
-    Sys.getenv("LOGIC_APP_NAME"),
-    Sys.getenv("RESOURCE_GROUP"),
+    get_env("LOGIC_APP_NAME"),
+    get_env("RESOURCE_GROUP"),
     "azure/logic_app.json"
 )
 
@@ -64,8 +64,8 @@ run(
 
 run(
   "az container show -g %s -n %s -o table",
-  Sys.getenv("RESOURCE_GROUP"),
-  Sys.getenv("ACI_NAME")
+  get_env("RESOURCE_GROUP"),
+  get_env("ACI_NAME")
 )
 
 
@@ -73,8 +73,8 @@ run(
 # ACI to start up and this command will result in a error if run too soon.
 
 run("az container logs --resource-group %s --name %s",
-    Sys.getenv("RESOURCE_GROUP"),
-    Sys.getenv("ACI_NAME")
+    get_env("RESOURCE_GROUP"),
+    get_env("ACI_NAME")
 )
 
 
@@ -82,9 +82,9 @@ run("az container logs --resource-group %s --name %s",
 
 # Delete the resource group
 
-run("az group delete --name %s --yes", Sys.getenv("RESOURCE_GROUP"))
+run("az group delete --name %s --yes", get_env("RESOURCE_GROUP"))
 
 
 # Delete the service principal
 
-run("az ad sp delete --id %s", Sys.getenv("SERVICE_PRINCIPAL_APPID"))
+run("az ad sp delete --id %s", get_env("SERVICE_PRINCIPAL_APPID"))
