@@ -26,8 +26,8 @@ This repository has been tested on an [Ubuntu Data Science Virtual Machine](http
 Local/Working Machine:
 - Ubuntu >=16.04LTS (not tested on Mac or Windows)
 - R >= 3.4.3
-- [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0
-- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0
+- [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0 (check current version with `docker version`)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0 (check current version with `az --version`)
 
 R packages (install by running `Rscript R/install_dependencies.R`):
 - gbm >=2.1.4.9000
