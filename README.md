@@ -70,12 +70,11 @@ While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/f
 Start by filling out details of the deployment in [resource_specs.R](./resource_specs.R). Then run through the following R scripts. It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/RBatchScoring")`. It is recommended that you restart your R session and clear the R environment before running each script.
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
-3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
-4. [04_forecast_on_batch.R](./04_forecast_on_batch.R)
-5. [05_run_from_docker.R](./05_run_from_docker.R)
-6. [06_deploy_logic_app.R](./06_deploy_logic_app.R) \*
+3. [03_forecast_on_batch.R](./03_forecast_on_batch.R)
+4. [04_run_from_docker.R](./04_run_from_docker.R)
+5. [05_deploy_logic_app.R](./05_deploy_logic_app.R) \*
 
-\* Note: after running the 06_deploy_logic_app.R script, you will need to authenticate to allow the Logic App to create an ACI. Go into the Azure portal and open up the ACI connector to authenticate as shown below.
+\* Note: after running the 05_deploy_logic_app.R script, you will need to authenticate to allow the Logic App to create an ACI. Go into the Azure portal and open up the ACI connector to authenticate as shown below.
 ![ACI connector authentication](https://happypathspublic.blob.core.windows.net/assets/batch_scoring_for_dl/azure_aci_connector_auth.PNG)
 
 # Contributing
