@@ -188,7 +188,7 @@
             "location": "{REGION}",
             "scale": null,
             "properties": {
-                "displayName": "DefaultEndpointsProtocol=https;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={STORAGE_ACCOUNT_KEY};EndpointSuffix={STORAGE_ENDPOINT_SUFFIX}",
+                "displayName": "DefaultEndpointsProtocol=https;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={STORAGE_ACCOUNT_KEY};EndpointSuffix=core.windows.net",
                 "customParameterValues": {},
                 "api": {
                     "id": "[concat('/subscriptions/{SUBSCRIPTION_ID}/providers/Microsoft.Web/locations/{REGION}/managedApis/', parameters('connections_aci_name'))]"
