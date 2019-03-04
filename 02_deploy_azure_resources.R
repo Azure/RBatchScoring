@@ -115,14 +115,19 @@ run(
 
 # Replicate data ---------------------------------------------------------------
 
-# Factor by which to replicate products. Expand to 1000 SKUs from 90 products
+# Expand data to 1000 SKUs from 90 products
 
-multiplier <- floor(TARGET_SKUS / 11)
-
-for (m in 2:multiplier) {
-  run("cp data/history/product1.csv data/history/product%s.csv", m)
-  run("cp data/futurex/product1.csv data/futurex/product%s.csv", m)
-}
+system.time({
+  lapply(2:floor(TARGET_SKUS / 11),
+         function(m) {
+           file.copy("data/history/product1.csv",
+                     paste0("data/history/product", m, ".csv"),
+                     overwrite = TRUE)
+           file.copy("data/futurex/product1.csv",
+                     paste0("data/futurex/product", m, ".csv"),
+                     overwrite = TRUE)
+         })
+})
 
 
 # Create Blob container and upload resources -----------------------------------
