@@ -29,7 +29,7 @@ Local/Working Machine:
 - [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0
 - [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0
 
-R packages*:
+R packages (install by running `Rscript R/install_dependencies.R`):
 - gbm >=2.1.4.9000
 - rAzureBatch >=0.6.2
 - doAzureParallel >=0.7.2
@@ -42,8 +42,6 @@ R packages*:
 - dotenv >=1.0.2
 - AzureStor >=1.0.0
 - AzureRMR >=1.0.0
-
-\* Install all R package dependencies by running `Rscript R/install_dependencies.R`
 
 Accounts:
 - [Azure Subscription](https://azure.microsoft.com/free/)
