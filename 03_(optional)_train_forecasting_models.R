@@ -138,7 +138,8 @@ result <- foreach(
 multidownload_blob(
   cont,
   src = "models/*",
-  dest = "models"
+  dest = "models",
+  overwrite = TRUE
 )
 
 
