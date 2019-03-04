@@ -1,5 +1,5 @@
 
-# 05_deploy_logic_app.R
+# 06_deploy_logic_app.R
 
 # This script deploys a Logic App from an Azure Resource Manager (ARM)
 # template. The Logic App will create an Azure Container Instance on a schedule
