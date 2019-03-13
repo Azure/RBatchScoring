@@ -12,6 +12,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 library(dotenv)
 
+source("R/utilities.R")
+
 # Delete the resource group
 
 run("az group delete --name %s --yes", get_env("RESOURCE_GROUP"))
