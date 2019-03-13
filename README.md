@@ -71,6 +71,7 @@ Start by filling out details of the deployment in [resource_specs.R](./resource_
 3. [03_forecast_on_batch.R](./03_forecast_on_batch.R)
 4. [04_run_from_docker.R](./04_run_from_docker.R)
 5. [05_deploy_logic_app.R](./05_deploy_logic_app.R) \*
+6. [06_delete_resources.R](./06_delete_resources.R)
 
 \* Note: after running the 05_deploy_logic_app.R script, you will need to authenticate to allow the Logic App to create an ACI. Go into the Azure portal and open up the ACI connector to authenticate as shown below.
 ![ACI connector authentication](https://happypathspublic.blob.core.windows.net/assets/batch_scoring_for_dl/azure_aci_connector_auth.PNG)

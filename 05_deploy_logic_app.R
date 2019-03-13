@@ -77,14 +77,3 @@ run("az container logs --resource-group %s --name %s",
     get_env("ACI_NAME")
 )
 
-
-# Clean up resources -----------------------------------------------------------
-
-# Delete the resource group
-
-run("az group delete --name %s --yes", get_env("RESOURCE_GROUP"))
-
-
-# Delete the service principal
-
-run("az ad sp delete --id %s", get_env("SERVICE_PRINCIPAL_APPID"))
