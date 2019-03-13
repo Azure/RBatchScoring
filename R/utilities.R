@@ -164,7 +164,7 @@ set_resource_specs <- function(dotenv_file = ".env") {
     file.create(dotenv_file)
   })
   
-  source("resource_specs.R")
+  source("00_resource_specs.R")
   
   expected_envs <- c(
     "SUBSCRIPTION_ID",
