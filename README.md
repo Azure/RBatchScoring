@@ -50,7 +50,7 @@ Accounts:
 While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) is useful to inspect your storage account.
 
 ## Setup
-
+Run the following in your local terminal:
 1. Clone the repo `git clone <repo-name>`
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
