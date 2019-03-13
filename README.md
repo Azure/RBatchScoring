@@ -21,7 +21,7 @@ This example uses the scenario of a large food retail company that needs to fore
 
 ## Prerequisites
 
-This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with manay of the local/working machine dependencies pre-installed.
+This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with many of the local/working machine dependencies pre-installed.
 
 Local/Working Machine:
 - Ubuntu >=16.04LTS (not tested on Mac or Windows)
