@@ -1,5 +1,7 @@
 # Batch forecasting on Azure with R models
 
+THIS REPOSITORY IS STILL UNDERGOING TESTING
+
 ## Overview
 
 In this repository, we use the scenario of product sales forecasting to demonstrate the recommended approach for batch scoring with R models on Azure. This architecture can be generalized for any scenario involving batch scoring using R models.
