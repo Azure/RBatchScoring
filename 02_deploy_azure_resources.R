@@ -195,7 +195,7 @@ create_cluster_json <- function(save_dir = "azure") {
       ),
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
-    containerImage = get_env("WORKER_CONTAINER_IMAGE"),
+    containerImage = paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
     commandLine = c()
   )
   
