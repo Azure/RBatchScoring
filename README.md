@@ -1,4 +1,4 @@
-# Batch forecasting on Azure with R models
+# Batch scoring on Azure with R models
 
 THIS REPOSITORY IS STILL UNDERGOING TESTING
 
