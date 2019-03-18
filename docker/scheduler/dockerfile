@@ -17,7 +17,7 @@ RUN install2.r --error --repos https://mran.microsoft.com/snapshot/2019-01-07 \
 
 WORKDIR /job
 ADD R /job/R
-ADD 04_forecast_on_batch.R /job/03_forecast_on_batch.R
+ADD 03_forecast_on_batch.R /job/03_forecast_on_batch.R
 RUN mkdir /job/azure
 
 CMD ["Rscript", "03_forecast_on_batch.R"]
