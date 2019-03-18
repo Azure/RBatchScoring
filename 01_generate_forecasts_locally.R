@@ -5,6 +5,9 @@
 # consists of weekly sales of 11 orange juice brands across 83 stores. Forecasts
 # are generated for these products using pre-trained models.
 #
+# Note: As with all scripts in this repository, it is recommended that you step
+# through it line-by-line (with Ctrl + Enter if using RStudio)
+#
 # Run time ~2 minutes
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
