@@ -56,22 +56,3 @@ run(
     get_env("RESOURCE_GROUP"),
     "azure/logic_app.json"
 )
-
-
-# Check the provisioning state of the ACI
-
-run(
-  "az container show -g %s -n %s -o table",
-  get_env("RESOURCE_GROUP"),
-  get_env("ACI_NAME")
-)
-
-
-# Check the logs of the ACI. Note that it will take a few minutes for the
-# ACI to start up and this command will result in a error if run too soon.
-
-run("az container logs --resource-group %s --name %s",
-    get_env("RESOURCE_GROUP"),
-    get_env("ACI_NAME")
-)
-
