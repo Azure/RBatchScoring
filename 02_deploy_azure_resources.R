@@ -8,7 +8,7 @@
 #
 # Note: you must have logged in to your Docker Hub account and the Azure CLI.
 #
-# Run time ~4 minutes
+# Run time ~6 minutes
 
 
 # Set environment variables ----------------------------------------------------
