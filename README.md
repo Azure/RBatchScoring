@@ -73,8 +73,10 @@ After running these scripts, navigate to your resource group in the Azure portal
 To complete the deployment, you will need to authenticate to allow the Logic App to create an ACI. Click on the ACI connector to authenticate as shown below:
 ![ACI connector authentication](./images/aci_auth.png)
 
-Finally, you now need enable the Logic App. Go to the logic app's pane in the portal and click the Enable button to kick off its first run:
+Finally, you now need enable the Logic App. Go to the logic app's pane in the portal and click the Enable button to kick off its first run.
 ![Enable Logic App](./images/logic_app.png)
+
+Go to the new Container instances object in your resource group and see the status of the running job in the Containers pane.
 
 When you are finished with your deployment, you can run [06_delete_resources.R](./06_delete_resources.R) to delete the resources that were created.
 
