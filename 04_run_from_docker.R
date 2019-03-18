@@ -25,16 +25,18 @@ source("R/utilities.R")
 
 run(
   "sudo docker build -t %s -f docker/scheduler/dockerfile .",
-  get_env("SCHEDULER_CONTAINER_IMAGE")
+  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
 )
 
 run(
   "sudo docker tag %s:latest %s",
-  get_env("SCHEDULER_CONTAINER_IMAGE"),
-  get_env("SCHEDULER_CONTAINER_IMAGE")
+  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE")),
+  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
 )
 
-run("sudo docker push %s", get_env("SCHEDULER_CONTAINER_IMAGE"))
+run("sudo docker push %s",
+    paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
+)
 
 
 # Run the docker container
@@ -44,6 +46,6 @@ env_vars <- get_env_var_list()
 run(
   paste("sudo docker run", 
       paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "),
-      get_env("SCHEDULER_CONTAINER_IMAGE")
+      paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
   )
 )
