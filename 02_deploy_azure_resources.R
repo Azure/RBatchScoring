@@ -115,17 +115,15 @@ run(
 
 # Expand data to 1000 SKUs from 90 products
 
-system.time({
-  lapply(2:floor(TARGET_SKUS / 11),
-         function(m) {
-           file.copy("data/history/product1.csv",
-                     paste0("data/history/product", m, ".csv"),
-                     overwrite = TRUE)
-           file.copy("data/futurex/product1.csv",
-                     paste0("data/futurex/product", m, ".csv"),
-                     overwrite = TRUE)
-         })
-})
+lapply(2:floor(TARGET_SKUS / 11),
+       function(m) {
+         file.copy("data/history/product1.csv",
+                   paste0("data/history/product", m, ".csv"),
+                   overwrite = TRUE)
+         file.copy("data/futurex/product1.csv",
+                   paste0("data/futurex/product", m, ".csv"),
+                   overwrite = TRUE)
+       })
 
 
 # Create Blob container and upload resources -----------------------------------
