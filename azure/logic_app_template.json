@@ -135,7 +135,7 @@
                                                             "value": "{BLOB_CONTAINER_URL}"
                                                         }
                                                     ],
-                                                    "image": "{SCHEDULER_CONTAINER_IMAGE}",
+                                                    "image": "{DOCKER_ID}/{SCHEDULER_CONTAINER_IMAGE}",
                                                     "resources": {
                                                         "requests": {
                                                             "cpu": 2,
