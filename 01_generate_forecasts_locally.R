@@ -10,8 +10,6 @@
 #
 # Run time ~2 minutes
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 library(dplyr)
 library(gbm)
 library(ggplot2)

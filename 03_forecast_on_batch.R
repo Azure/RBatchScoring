@@ -7,10 +7,6 @@
 #
 # Run time ~5 minutes on a 5 node cluster
 
-if (interactive()) {
-  setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-}
-
 library(dotenv)
 library(jsonlite)
 library(doAzureParallel)

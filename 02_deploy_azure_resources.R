@@ -13,8 +13,6 @@
 
 # Set environment variables ----------------------------------------------------
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
