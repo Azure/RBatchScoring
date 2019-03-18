@@ -41,7 +41,7 @@ run("sudo docker push %s",
 
 # Run the docker container
 
-env_vars <- get_env_var_list()
+env_vars <- get_dotenv_vars()
 
 run(
   paste("sudo docker run", 

@@ -158,7 +158,7 @@ get_env <- function(var) {
 
 get_dotenv_vars <- function(dotenv_file = ".env") {
   dotenv_lines <- read_dotenv(dotenv_file)
-  read_dotenv_lines(dotenv_lines)
+  dotenv_lines_to_vars(dotenv_lines)
 }
 
 
