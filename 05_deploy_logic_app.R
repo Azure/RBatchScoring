@@ -28,18 +28,10 @@ source("R/utilities.R")
 # Insert resource names and environment variables into json template
 
 file_name <- file.path("azure", "logic_app_template.json")
+
 logic_app_json <- readChar(file_name, file.info(file_name)$size)
 
-replace_vars <- function(var_name) {
-  pattern <- paste0("\\{", var_name, "\\}")
-  gsub(pattern, get_env(var_name), logic_app_json)
-}
-
-vars <- get_dotenv_vars()
-
-for (var in vars) {
-  logic_app_json <- replace_vars(var)
-}
+logic_app_json <- replace_template_vars(logic_app_json)
 
 write.table(logic_app_json, file.path("azure", "logic_app.json"),
             quote = FALSE, row.names = FALSE, col.names = FALSE)

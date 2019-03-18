@@ -156,47 +156,6 @@ get_env <- function(var) {
 }
 
 
-set_resource_specs <- function(dotenv_file = ".env") {
-  
-  # Create or replace a .env file to hold secrets
-  invisible({
-    if (file.exists(dotenv_file)) file.remove(dotenv_file)
-    file.create(dotenv_file)
-  })
-  
-  source("00_resource_specs.R")
-  
-  expected_envs <- c(
-    "SUBSCRIPTION_ID",
-    "TENANT_ID",
-    "DOCKER_ID",
-    "REGION",
-    "RESOURCE_GROUP",
-    "SERVICE_PRINCIPAL_NAME",
-    "BATCH_ACCOUNT_NAME",
-    "STORAGE_ACCOUNT_NAME",
-    "BLOB_CONTAINER_NAME",
-    "LOGIC_APP_NAME",
-    "ACI_NAME",
-    "CLUSTER_NAME",
-    "NUM_NODES",
-    "VM_SIZE",
-    "WORKER_CONTAINER_IMAGE",
-    "SCHEDULER_CONTAINER_IMAGE"
-  )
-  
-  lapply(expected_envs, function(e) {
-    if (eval(parse(text=e)) == "") {
-      stop("All variables in resource_spec.R must be set! Fill out resource_specs.R\
-            and restart this script.")
-    }
-  })
-  
-  invisible(lapply(expected_envs, function(e) set_env(e, eval(parse(text=e)))))
-  
-}
-
-
 get_dotenv_vars <- function(dotenv_file = ".env") {
   dotenv_lines <- read_dotenv(dotenv_file)
   read_dotenv_lines(dotenv_lines)
@@ -239,4 +198,60 @@ find_dotenv_var <- function(dotenv_vars, var) {
 
 read_dotenv <- function(dotenv_file = ".env") {
   readLines(dotenv_file)
+}
+
+
+set_resource_specs <- function(dotenv_file = ".env") {
+  
+  # Create or replace a .env file to hold secrets
+  invisible({
+    if (file.exists(dotenv_file)) file.remove(dotenv_file)
+    file.create(dotenv_file)
+  })
+  
+  source("00_resource_specs.R")
+  
+  expected_envs <- c(
+    "SUBSCRIPTION_ID",
+    "TENANT_ID",
+    "DOCKER_ID",
+    "REGION",
+    "RESOURCE_GROUP",
+    "SERVICE_PRINCIPAL_NAME",
+    "BATCH_ACCOUNT_NAME",
+    "STORAGE_ACCOUNT_NAME",
+    "BLOB_CONTAINER_NAME",
+    "LOGIC_APP_NAME",
+    "ACI_NAME",
+    "CLUSTER_NAME",
+    "NUM_NODES",
+    "VM_SIZE",
+    "WORKER_CONTAINER_IMAGE",
+    "SCHEDULER_CONTAINER_IMAGE"
+  )
+  
+  lapply(expected_envs, function(e) {
+    if (eval(parse(text=e)) == "") {
+      stop("All variables in resource_spec.R must be set! Fill out resource_specs.R\
+            and restart this script.")
+    }
+  })
+  
+  invisible(lapply(expected_envs, function(e) set_env(e, eval(parse(text=e)))))
+  
+}
+
+
+replace_var <- function(var_name, json) {
+  pattern <- paste0("\\{", var_name, "\\}")
+  gsub(pattern, get_env(var_name), json)
+}
+
+
+replace_template_vars <- function(logic_app_json) {
+  vars <- get_dotenv_vars()
+  for (var in vars) {
+    logic_app_json <- replace_var(var, logic_app_json)
+  }
+  logic_app_json
 }
