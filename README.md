@@ -1,5 +1,7 @@
 # Batch forecasting on Azure with R models
 
+THIS REPOSITORY IS STILL UNDERGOING TESTING
+
 ## Overview
 
 In this repository, we use the scenario of product sales forecasting to demonstrate the recommended approach for batch scoring with R models on Azure. This architecture can be generalized for any scenario involving batch scoring using R models.
@@ -15,21 +17,21 @@ The above architecture works as follows:
 
 ## Forecasting scenario
 
-This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can carry tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. In this example, we generate forecasts for 1,000 products across 83 stores, resuling in 5.4 million scoring operations. The architecture deployed is capable of scaling to this challenge. See [here](forecasting_scenario.md) for more details of the forecasting scenario.
+This example uses the scenario of a large food retail company that needs to forecast the sales of thousands of products across multiple stores. A large grocery store can carry tens of thousands of products and generating forecasts for so many product/store combinations can be a very computationally intensive task. In this example, we generate forecasts for 1,000 products across 83 stores, resulting in 5.4 million scoring operations. The architecture deployed is capable of scaling to this challenge. See [here](forecasting_scenario.md) for more details of the forecasting scenario.
 
 ![Product sales forecasting](./images/forecasts.png)
 
 ## Prerequisites
 
-This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with manay of the local/working machine dependencies pre-installed.
+This repository has been tested on an [Ubuntu Data Science Virtual Machine](https://azuremarketplace.microsoft.com/marketplace/apps/microsoft-dsvm.linux-data-science-vm-ubuntu) which comes with many of the local/working machine dependencies pre-installed.
 
 Local/Working Machine:
 - Ubuntu >=16.04LTS (not tested on Mac or Windows)
 - R >= 3.4.3
-- [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0
-- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0
+- [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1)  >=1.0 (check current version with `docker version`)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest) >=2.0 (check current version with `az --version`)
 
-R packages*:
+R packages (install by running `Rscript R/install_dependencies.R`):
 - gbm >=2.1.4.9000
 - rAzureBatch >=0.6.2
 - doAzureParallel >=0.7.2
@@ -43,8 +45,6 @@ R packages*:
 - AzureStor >=1.0.0
 - AzureRMR >=1.0.0
 
-\* Install all R package dependencies by running `Rscript R/install_dependencies.R`
-
 Accounts:
 - [Azure Subscription](https://azure.microsoft.com/free/)
 - [Dockerhub account](https://hub.docker.com/)
@@ -52,31 +52,35 @@ Accounts:
 While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) is useful to inspect your storage account.
 
 ## Setup
-
+Run the following in your local terminal:
 1. Clone the repo `git clone <repo-name>`
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
 4. Log in to Azure using the Azure CLI `az login`
-7. Log in to Docker `docker login`
-8. Enable non-root users to run docker commands
-    ```
-    sudo groupadd docker
-    sudo usermod -aG docker $USER
-    ```
-    Restart your terminal after running the above commands
+5. Log in to Docker `sudo docker login`
 
 ## Deployment steps
 
-Start by filling out details of the deployment in [resource_specs.R](./resource_specs.R). Then run through the following R scripts. It is intended that you step through each script interactively using an IDE such as RStudio. Before executing the scripts, set your working directory of your R session `setwd("~/RBatchScoring")`. It is recommended that you restart your R session and clear the R environment before running each script.
+Start by filling out details of the deployment in [00_resource_specs.R](./00_resource_specs.R). Then run through the following R scripts. It is intended that you step through each script line-by-line (with Ctrl + Enter if using RStudio). Before executing the scripts, set your working directory of your R session `setwd("~/RBatchScoring")`. It is recommended that you restart your R session and clear the R environment before running each script.
+
 1. [01_generate_forecasts_locally.R](./01_generate_forecasts_locally.R)
 2. [02_deploy_azure_resources.R](./02_deploy_azure_resources.R)
-3. [03_(optional)_train_forecasting_models.R](./03_(optional)_train_forecasting_models.R)
-4. [04_forecast_on_batch.R](./04_forecast_on_batch.R)
-5. [05_run_from_docker.R](./05_run_from_docker.R)
-6. [06_deploy_logic_app.R](./06_deploy_logic_app.R) \*
+3. [03_forecast_on_batch.R](./03_forecast_on_batch.R)
+4. [04_run_from_docker.R](./04_run_from_docker.R)
+5. [05_deploy_logic_app.R](./05_deploy_logic_app.R)
 
-\* Note: after running the 06_deploy_logic_app.R script, you will need to authenticate to allow the Logic App to create an ACI. Go into the Azure portal and open up the ACI connector to authenticate as shown below.
-![ACI connector authentication](https://happypathspublic.blob.core.windows.net/assets/batch_scoring_for_dl/azure_aci_connector_auth.PNG)
+After running these scripts, navigate to your resource group in the Azure portal to see the following deployed resources:
+![Deployed resources](./images/resources.png)
+
+To complete the deployment, you will need to authenticate to allow the Logic App to create an ACI. Click on the ACI connector to authenticate as shown below:
+![ACI connector authentication](./images/aci_auth.png)
+
+Finally, you now need enable the Logic App. Go to the logic app's pane in the portal and click the Enable button to kick off its first run.
+![Enable Logic App](./images/logic_app.png)
+
+Go to the new Container instances object in your resource group and see the status of the running job in the Containers pane.
+
+When you are finished with your deployment, you can run [06_delete_resources.R](./06_delete_resources.R) to delete the resources that were created.
 
 # Contributing
 

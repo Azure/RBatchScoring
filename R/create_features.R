@@ -12,7 +12,7 @@ create_features <- function(dat,
   #   step: the time step to be forecasted. This determines how far the lagged
   #         features are shifted.
   #   remove_target: remove the target variable (sales) from the result.
-  #   filter_score_week: filter result for the specified week
+  #   filter_week: filter result for the specified week
   #
   # Returns:
   #   A dataframe of model features

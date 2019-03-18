@@ -1,12 +1,11 @@
 
-# 04_forecast_at_scale_on_batch.R
+# 03_forecast_on_batch.R
 # 
 # This script generates forecasts for multiple products in parallel on Azure
 # Batch. The doAzureParallel package schedules the jobs to be executed on the
 # cluster and manages the job queue. Forecast results are written to blob.
 #
 # Run time ~5 minutes on a 5 node cluster
-
 
 library(dotenv)
 library(jsonlite)
@@ -23,7 +22,7 @@ source("R/generate_forecast.R")
 
 # Register batch pool and options for the job ----------------------------------
 
-# If running from script, within docker container, recreate config files from
+# If running from within docker container, recreate config files from
 # environment variables.
 
 if (!interactive()) {
@@ -32,29 +31,44 @@ if (!interactive()) {
   create_cluster_json()
 }
 
+
+# Set the doAzureParallel credentials
+
 setCredentials("azure/credentials.json")
 
 
-# Set the cluster if already exists, otherwise create it
+# Create the cluster
 
 clust <- makeCluster("azure/cluster.json")
 
+
 # Register the cluster as the doAzureParallel backend
+
 registerDoAzureParallel(clust)
 
 print(paste("Cluster has", getDoParWorkers(), "nodes"))
+
+
+# Set doAzureParallel options
 
 azure_options <- list(
   enableCloudCombine = TRUE,
   autoDeleteJob = FALSE
 )
 
+
+# Set packages to load on each node
+
 pkgs_to_load <- c("dplyr", "gbm", "AzureStor")
 
+
+# Get container object for reading/writing data
+
 cont <- blob_container(
-  Sys.getenv("BLOB_CONTAINER_URL"),
-  key = Sys.getenv("STORAGE_ACCOUNT_KEY")
+  get_env("BLOB_CONTAINER_URL"),
+  key = get_env("STORAGE_ACCOUNT_KEY")
 )
+
 
 # Split product forecasts equally across nodes
 
@@ -62,7 +76,7 @@ chunks <- chunk_by_nodes(floor(TARGET_SKUS / INITIAL_SKUS))
 
 
 # Generate forecasts
-foreach(
+results <- foreach(
     idx=1:length(chunks),
     .options.azure = azure_options,
     .packages = pkgs_to_load
@@ -104,7 +118,6 @@ foreach(
       
     }
     
-    # Return arbitrary result                 
     TRUE
                          
   }

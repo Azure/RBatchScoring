@@ -1,4 +1,3 @@
-
 # Provide specifications for your deployment.
 
 # Note: You must specify values for the variables under Account details. For all

@@ -26,7 +26,7 @@
             "tags": {},
             "scale": null,
             "properties": {
-                "state": "Enabled",
+                "state": "Disabled",
                 "definition": {
                     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
                     "contentVersion": "1.0.0.0",
@@ -65,6 +65,10 @@
                                                         {
                                                             "name": "TENANT_ID",
                                                             "value": "{TENANT_ID}"
+                                                        },
+                                                        {
+                                                            "name": "DOCKER_ID",
+                                                            "value": "{DOCKER_ID}"
                                                         },
                                                         {
                                                             "name": "SERVICE_PRINCIPAL_NAME",
@@ -135,7 +139,7 @@
                                                             "value": "{BLOB_CONTAINER_URL}"
                                                         }
                                                     ],
-                                                    "image": "{SCHEDULER_CONTAINER_IMAGE}",
+                                                    "image": "{DOCKER_ID}/{SCHEDULER_CONTAINER_IMAGE}",
                                                     "resources": {
                                                         "requests": {
                                                             "cpu": 2,
@@ -188,7 +192,7 @@
             "location": "{REGION}",
             "scale": null,
             "properties": {
-                "displayName": "DefaultEndpointsProtocol=https;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={STORAGE_ACCOUNT_KEY};EndpointSuffix={STORAGE_ENDPOINT_SUFFIX}",
+                "displayName": "DefaultEndpointsProtocol=https;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={STORAGE_ACCOUNT_KEY};EndpointSuffix=core.windows.net",
                 "customParameterValues": {},
                 "api": {
                     "id": "[concat('/subscriptions/{SUBSCRIPTION_ID}/providers/Microsoft.Web/locations/{REGION}/managedApis/', parameters('connections_aci_name'))]"

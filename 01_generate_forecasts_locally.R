@@ -5,8 +5,10 @@
 # consists of weekly sales of 11 orange juice brands across 83 stores. Forecasts
 # are generated for these products using pre-trained models.
 #
+# Note: As with all scripts in this repository, it is recommended that you step
+# through it line-by-line (with Ctrl + Enter if using RStudio)
+#
 # Run time ~2 minutes
-
 
 library(dplyr)
 library(gbm)
@@ -29,7 +31,8 @@ source("R/get_data.R")
 dat <- read.csv(file.path("data", "history", "product1.csv"))
 
 
-# Plot quantiles of total sales by stores.
+# Plot quantiles of total weekly sales (for all products) by store. The sales
+# vary significantly across stores, and from week to week.
 
 dat %>%
   group_by(week, store) %>%
@@ -53,17 +56,19 @@ dat %>%
   ggtitle("Quantiles of total sales by store")
 
 
-# Plot mean weekly sales by SKU
+# Plot total weekly sales by SKU (stock keeping unit of each orange juice brand).
+# The total sales of each product varies significantly week to week and also
+# between products.
 
 dat %>%
   mutate(sku = as.factor(sku)) %>%
   group_by(sku, week) %>%
-  summarise(mean_sales = sum(sales)) %>%
-  ggplot(aes(x = sku, y = mean_sales, colour = sku)) +
+  summarise(sales = sum(sales)) %>%
+  ggplot(aes(x = sku, y =sales, colour = sku)) +
   geom_boxplot() +
   scale_y_log10() +
-  labs(y = "mean weekly sales") +
-  ggtitle("Mean weekly sales by SKU")
+  labs(y = "Total weekly sales") +
+  ggtitle("Total weekly sales by SKU")
 
 
 # Generate a forecast ----------------------------------------------------------
@@ -85,7 +90,6 @@ multidownload_blob(
   dest = "models",
   overwrite = TRUE
 )
-
 
 
 # List the downloaded models. Note that models for t7 (time step 7) will be
@@ -110,7 +114,7 @@ create_features <- function(dat,
   #   step: the time step to be forecasted. This determines how far the lagged
   #         features are shifted.
   #   remove_target: remove the target variable (sales) from the result.
-  #   filter_score_week: filter result for the specified week
+  #   filter_week: filter result for the specified week
   #
   # Returns:
   #   A dataframe of model features
@@ -269,12 +273,13 @@ futurex <- read.csv(
   )
 
 
-# Generate a forecast for all 11 SKUs of product 1
+# Generate a forecast for all 11 SKUs
 
 forecasts <- generate_forecast(futurex, history, models)
 
 
-# Plot the forecast output of four SKUs in one store
+# Plot the forecast output of four SKUs in one store. You can ignore the warning
+# about missing values
 
 plot_store <- 1
 
@@ -303,5 +308,5 @@ dat %>%
   ) +
   labs(y = "sales") +
   ggtitle(paste("Forecasts for SKUs 1 to 4 in store 1")) +
-  ggsave("forecasts.png", device = "png", width = 7, height = 7)
+  ggsave("images/forecasts.png", device = "png", width = 7, height = 7)
 
