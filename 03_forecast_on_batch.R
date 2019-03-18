@@ -61,7 +61,7 @@ chunks <- chunk_by_nodes(floor(TARGET_SKUS / INITIAL_SKUS))
 
 
 # Generate forecasts
-foreach(
+results <- foreach(
     idx=1:length(chunks),
     .options.azure = azure_options,
     .packages = pkgs_to_load
