@@ -67,6 +67,10 @@
                                                             "value": "{TENANT_ID}"
                                                         },
                                                         {
+                                                            "name": "DOCKER_ID",
+                                                            "value": "{DOCKER_ID}"
+                                                        },
+                                                        {
                                                             "name": "SERVICE_PRINCIPAL_NAME",
                                                             "value": "{SERVICE_PRINCIPAL_NAME}"
                                                         },
