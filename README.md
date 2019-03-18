@@ -55,13 +55,7 @@ Run the following in your local terminal:
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
 4. Log in to Azure using the Azure CLI `az login`
-7. Log in to Docker `docker login`
-8. Enable non-root users to run docker commands
-    ```
-    sudo groupadd docker
-    sudo usermod -aG docker $USER
-    ```
-    Restart your terminal after running the above commands
+5. Log in to Docker `sudo docker login`
 
 ## Deployment steps
 

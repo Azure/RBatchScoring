@@ -152,17 +152,17 @@ file.edit(file.path("docker", "worker", "dockerfile"))
 # Build and upload the worker docker image to Docker Hub
 
 run(
-  "docker build -t %s -f docker/worker/dockerfile .",
+  "sudo docker build -t %s -f docker/worker/dockerfile .",
   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
 )
 
 run(
-  "docker tag %s:latest %s",
+  "sudo docker tag %s:latest %s",
   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
 )
 
-run("docker push %s",
+run("sudo docker push %s",
     paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")))
 
 

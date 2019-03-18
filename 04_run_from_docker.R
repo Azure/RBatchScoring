@@ -29,17 +29,17 @@ file.edit(file.path("docker", "scheduler", "dockerfile"))
 # Build scheduler docker image
 
 run(
-  "docker build -t %s -f docker/scheduler/dockerfile .",
+  "sudo docker build -t %s -f docker/scheduler/dockerfile .",
   get_env("SCHEDULER_CONTAINER_IMAGE")
 )
 
 run(
-  "docker tag %s:latest %s",
+  "sudo docker tag %s:latest %s",
   get_env("SCHEDULER_CONTAINER_IMAGE"),
   get_env("SCHEDULER_CONTAINER_IMAGE")
 )
 
-run("docker push %s", get_env("SCHEDULER_CONTAINER_IMAGE"))
+run("sudo docker push %s", get_env("SCHEDULER_CONTAINER_IMAGE"))
 
 
 # Run the docker container
@@ -47,7 +47,7 @@ run("docker push %s", get_env("SCHEDULER_CONTAINER_IMAGE"))
 env_vars <- get_env_var_list()
 
 run(
-  paste("docker run", 
+  paste("sudo docker run", 
       paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "),
       get_env("SCHEDULER_CONTAINER_IMAGE")
   )
