@@ -14,16 +14,13 @@
 
 # Define docker image ----------------------------------------------------------
 
+# The dockerfile used to build to the scheduler docker image can be reviewed in
+# docker/scheduler/dockerfile
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 library(dotenv)
 source("R/utilities.R")
-
-
-# Review the scheduler docker image
-
-file.edit(file.path("docker", "scheduler", "dockerfile"))
 
 
 # Build scheduler docker image

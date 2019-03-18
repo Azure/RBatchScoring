@@ -144,9 +144,9 @@ multiupload_blob(cont, src = "models/*", dest = "models")
 
 # Build worker docker image ----------------------------------------------------
 
-# Review the dockerfile in docker/worker/dockerfile
-
-file.edit(file.path("docker", "worker", "dockerfile"))
+# The worker docker container will be deployed on each node of the Batch cluster.
+# The dockerfile used to build to the worker docker image can be reviewed in
+# docker/worker/dockerfile
 
 
 # Build and upload the worker docker image to Docker Hub
