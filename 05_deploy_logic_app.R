@@ -3,16 +3,12 @@
 
 # This script deploys a Logic App from an Azure Resource Manager (ARM)
 # template. The Logic App will create an Azure Container Instance on a schedule
-# set to run once a week. The ACI runs the 04_forecast_on_batch.R script to 
+# set to run once a week. The ACI runs the 03_forecast_on_batch.R script to 
 # generate forecasts.
 
 # Note: after deploying the ARM template, you must authorize the ACI connector
 # in the Azure Portal which gives permission to the Logic App to deploy the ACI.
 # See the README.md file for instructions on how to do this.
-#
-# The first run of the Logic App will always fail because it is not yet
-# authenticated. Once the ACI connector has been authorized, click Run Trigger
-# in the Logic App pane to trigger the batch forecasting process.
 #
 # Run time ~6 minutes on a 5 node cluster
 
@@ -48,3 +44,6 @@ run(
     get_env("RESOURCE_GROUP"),
     "azure/logic_app.json"
 )
+
+# Now see README.md for instructions on how to complete the deployment, including
+# authentication of the Logic App ACI connector and enabling the Logic App.
