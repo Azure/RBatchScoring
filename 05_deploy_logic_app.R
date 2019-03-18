@@ -7,7 +7,7 @@
 # generate forecasts.
 
 # Note: after deploying the ARM template, you must authorize the ACI connector
-# in the Azure Portal witch gives permission to the Logic App to deploy the ACI.
+# in the Azure Portal which gives permission to the Logic App to deploy the ACI.
 # See the README.md file for instructions on how to do this.
 #
 # The first run of the Logic App will always fail because it is not yet
