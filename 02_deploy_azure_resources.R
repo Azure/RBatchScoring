@@ -206,3 +206,5 @@ create_cluster_json <- function(save_dir = "azure") {
 write_function(create_cluster_json, "R/create_cluster_json.R")
 
 create_cluster_json(save_dir = "azure")
+
+makeCluster("azure/cluster.json")
