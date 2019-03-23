@@ -12,18 +12,13 @@ pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2")
 install.packages(pkgs, repos = repo)
 
 devtools::install_github(
-  "cloudyr/AzureAuth",
-  ref = "e638802cd588bd90d6d090dbe0b974493bbb6f27" # 2019-03-22
-)
-
-devtools::install_github(
   "cloudyr/AzureRMR",
-  ref = "5eeb60988a2079b6b320af8df306c4fad802c13c" # 2019-03-23
+  ref = "5b54604ca63e5e0154318f04cc1056f8f946fcde"
 )
 
 devtools::install_github(
   "cloudyr/AzureStor",
-  ref = "79d0c80ff151ec5efc44a8133b465aa0fc0daabe" # 2019-03-21
+  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782"
 )
 
 devtools::install_github(
