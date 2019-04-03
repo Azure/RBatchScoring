@@ -1,6 +1,5 @@
 # Batch scoring on Azure with R models
 
-THIS REPOSITORY IS STILL UNDERGOING TESTING
 
 ## Overview
 
