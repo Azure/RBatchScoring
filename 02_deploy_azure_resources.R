@@ -105,11 +105,10 @@ call_docker(sprintf("build -t %s -f docker/worker/dockerfile .",
             paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
 ))
 
-# run(
-#   "sudo docker tag %s:latest %s",
-#   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
-#   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
-# )
+call_docker(sprintf("tag %s:latest %s",
+            paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
+            paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
+))
 
 call_docker(sprintf("sudo docker push %s",
             paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))))
