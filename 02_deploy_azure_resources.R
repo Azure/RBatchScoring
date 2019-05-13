@@ -17,6 +17,8 @@ library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
 library(AzureStor)
+library(AzureContainers)
+library(magrittr)
 
 source("R/options.R")
 source("R/utilities.R")
@@ -25,79 +27,35 @@ source("R/create_credentials_json.R")
 
 set_resource_specs()
 
-
-# Create resources with Azure CLI ----------------------------------------------
-
 # Create resource group
 
-run("az group create --name %s --location %s --query properties.provisioningState",
-    get_env("RESOURCE_GROUP"), get_env("REGION"))
+az <- AzureRMR::get_azure_login()
+sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
+rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"), location=get_env("REGION"))
 
 
 # Create service principal. You can ignore any retry warnings. If you have an
 # existing service principal of the same name, you can ignore the error message.
 
-run(
-  paste("az ad sp create-for-rbac",
-        "--name %s --subscription %s --scopes %s"),
-  paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-  get_env("SUBSCRIPTION_ID"),
-  paste0("/subscriptions/", get_env("SUBSCRIPTION_ID"),
-         "/resourceGroups/", get_env("RESOURCE_GROUP"))
-)
+gr <- AzureGraph::get_graph_login()
+app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
+
+rg$add_role_assignment(app, "Contributor")
+
+set_env("SERVICE_PRINCIPAL_APPID", app$properties$appId)
+set_env("SERVICE_PRINCIPAL_CRED", app$password)
 
 
-# Retrieve the app ID
+# Create storage account and container
 
-set_env(
-  "SERVICE_PRINCIPAL_APPID",
-  run(
-    "az ad sp show --id %s --query appId -o tsv",
-    paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-    intern = TRUE
-  )
-)
+stor <- rg$create_storage_account(get_env("STORAGE_ACCOUNT_NAME"), kind="BlobStorage")
 
+set_env("STORAGE_ACCOUNT_KEY", stor$list_keys()[1])
 
-# Retrieve the service principal's credential
+endp <- stor$get_blob_endpoint()
+cont <- create_blob_container(endp, get_env("BLOB_CONTAINER_NAME"))
 
-set_env(
-  "SERVICE_PRINCIPAL_CRED",
-  run("az ad sp credential reset --name %s --query password -o tsv",
-      paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-      intern = TRUE)
-)
-
-
-# Create storage account
-
-run(
-  paste("az storage account create",
-        "--kind BlobStorage --sku Standard_LRS --access-tier Hot",
-        "--name %s --resource-group %s --location %s --query provisioningState"),
-  get_env("STORAGE_ACCOUNT_NAME"),
-  get_env("RESOURCE_GROUP"),
-  get_env("REGION")
-)
-
-
-# Retrieve storage account key
-
-set_env(
-  "STORAGE_ACCOUNT_KEY",
-  run("az storage account keys list --account-name %s --query [0].value -o tsv",
-        get_env("STORAGE_ACCOUNT_NAME"), intern = TRUE)
-)
-
-
-# Construct blob container URL
-
-set_env("BLOB_CONTAINER_URL",
-       paste0(
-         "https://", get_env("STORAGE_ACCOUNT_NAME"),
-         ".blob.core.windows.net/", get_env("BLOB_CONTAINER_NAME"), "/"
-       )
-)
+set_env("BLOB_CONTAINER_URL", file.path(cont$endpoint$url, cont$name, "/"))
 
 
 # Create batch account
@@ -126,12 +84,7 @@ lapply(2:floor(TARGET_SKUS / 11),
        })
 
 
-# Create Blob container and upload resources -----------------------------------
-
-cont <- create_blob_container(
-  get_env("BLOB_CONTAINER_URL"),
-  key = get_env("STORAGE_ACCOUNT_KEY")
-)
+# upload resources -------------------------------------------------------------
 
 multiupload_blob(cont, src = "data/history/*", dest = "data/history")
 multiupload_blob(cont, src = "data/futurex/*", dest = "data/futurex")
