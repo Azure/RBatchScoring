@@ -18,7 +18,6 @@ library(jsonlite)
 library(doAzureParallel)
 library(AzureStor)
 library(AzureContainers)
-library(magrittr)
 
 source("R/options.R")
 source("R/utilities.R")
@@ -34,8 +33,7 @@ sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
 rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"), location=get_env("REGION"))
 
 
-# Create service principal. You can ignore any retry warnings. If you have an
-# existing service principal of the same name, you can ignore the error message.
+# Create service principal
 
 gr <- AzureGraph::get_graph_login()
 app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
@@ -60,13 +58,16 @@ set_env("BLOB_CONTAINER_URL", file.path(cont$endpoint$url, cont$name, "/"))
 
 # Create batch account
 
-run(
-  paste("az batch account create",
-        "--name %s --resource-group %s --location %s --storage-account %s",
-        "--query provisioningState"),
-  get_env("BATCH_ACCOUNT_NAME"), get_env("RESOURCE_GROUP"),
-  get_env("REGION"), get_env("STORAGE_ACCOUNT_NAME")
-)
+rg$create_resource(type="Microsoft.Batch/batchAccounts", name=get_env("BATCH_ACCOUNT_NAME"),
+  properties=list(AutoStorage=stor$id))
+
+# run(
+#   paste("az batch account create",
+#         "--name %s --resource-group %s --location %s --storage-account %s",
+#         "--query provisioningState"),
+#   get_env("BATCH_ACCOUNT_NAME"), get_env("RESOURCE_GROUP"),
+#   get_env("REGION"), get_env("STORAGE_ACCOUNT_NAME")
+# )
 
 
 # Replicate data ---------------------------------------------------------------
@@ -100,19 +101,18 @@ multiupload_blob(cont, src = "models/*", dest = "models")
 
 # Build and upload the worker docker image to Docker Hub
 
-run(
-  "sudo docker build -t %s -f docker/worker/dockerfile .",
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
-)
+call_docker(sprintf("build -t %s -f docker/worker/dockerfile .",
+            paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
+))
 
-run(
-  "sudo docker tag %s:latest %s",
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
-)
+# run(
+#   "sudo docker tag %s:latest %s",
+#   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
+#   paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
+# )
 
-run("sudo docker push %s",
-    paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")))
+call_docker(sprintf("sudo docker push %s",
+            paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))))
 
 
 # Define cluster ---------------------------------------------------------------
