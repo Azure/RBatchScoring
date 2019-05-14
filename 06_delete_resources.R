@@ -14,9 +14,13 @@ source("R/utilities.R")
 
 # Delete the resource group
 
-run("az group delete --name %s --yes", get_env("RESOURCE_GROUP"))
+AzureRMR::get_azure_login(get_env("TENANT_ID"))$
+  get_subscription(get_env("SUBSCRIPTION_ID"))$
+  delete_resource_group(get_env("RESOURCE_GROUP"), confirm=FALSE)
 
 
 # Delete the service principal
 
-run("az ad sp delete --id %s", get_env("SERVICE_PRINCIPAL_APPID"))
+AzureGraph::get_graph_login(get_env("TENANT_ID"))$
+  get_service_principal(get_env("SERVICE_PRINCIPAL_APPID"))$
+  delete_app(svc$properties$appId, confirm=FALSE)

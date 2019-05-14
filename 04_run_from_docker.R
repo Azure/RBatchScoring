@@ -13,40 +13,28 @@
 # docker/scheduler/dockerfile
 
 library(dotenv)
+library(AzureContainers)
 source("R/utilities.R")
 
+img_id <- paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
 
 # Build scheduler docker image
 
-run(
-  "sudo docker build -t %s -f docker/scheduler/dockerfile .",
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
+call_docker(sprintf("build -t %s -f docker/scheduler/dockerfile .", img_id))
 
 
 # Tag the image
 
-run(
-  "sudo docker tag %s:latest %s",
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE")),
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
+call_docker(sprintf("tag %s:latest %s", img_id, img_id))
 
 
 # Push the image to Docker Hub
 
-run("sudo docker push %s",
-    paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
+call_docker(sprintf("push %s", img_id))
 
 
 # Run the docker container
 
 env_vars <- get_dotenv_vars()
 
-run(
-  paste("sudo docker run", 
-      paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "),
-      paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-  )
-)
+call_docker(paste("run", paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "), img_id))

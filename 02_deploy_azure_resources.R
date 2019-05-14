@@ -28,14 +28,20 @@ set_resource_specs()
 
 # Create resource group
 
-az <- AzureRMR::get_azure_login()
+az <- try(AzureRMR::get_azure_login(get_env("TENANT_ID")), silent=TRUE)
+if(inherits(az, "try-error"))
+  az <- AzureRMR::create_azure_login(get_env("TENANT_ID"))
+
 sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
 rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"), location=get_env("REGION"))
 
 
 # Create service principal
 
-gr <- AzureGraph::get_graph_login()
+gr <- try(AzureGraph::get_graph_login(get_env("TENANT_ID")), silent=TRUE)
+if(inherits(gr, "try-error"))
+  gr <- AzureGraph::create_graph_login(get_env("TENANT_ID"))
+
 app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
 
 rg$add_role_assignment(app, "Contributor")
