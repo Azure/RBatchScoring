@@ -82,14 +82,6 @@ rg$create_resource(type="Microsoft.Batch/batchAccounts",
   )
 )
 
-# run(
-#   paste("az batch account create",
-#         "--name %s --resource-group %s --location %s --storage-account %s",
-#         "--query provisioningState"),
-#   get_env("BATCH_ACCOUNT_NAME"), get_env("RESOURCE_GROUP"),
-#   get_env("REGION"), get_env("STORAGE_ACCOUNT_NAME")
-# )
-
 
 # Replicate data ---------------------------------------------------------------
 
