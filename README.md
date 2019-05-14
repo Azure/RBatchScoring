@@ -41,8 +41,9 @@ R packages (install by running `Rscript R/install_dependencies.R`):
 - jsonlite >=1.5
 - devtools >=1.13.4
 - dotenv >=1.0.2
-- AzureStor >=1.0.0
-- AzureRMR >=1.0.0
+- AzureContainers >=1.0.2
+- AzureStor >=2.0.1
+- AzureRMR >=2.1.0
 
 Accounts:
 - [Azure Subscription](https://azure.microsoft.com/free/)
