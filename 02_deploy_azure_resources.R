@@ -33,7 +33,8 @@ if(inherits(az, "try-error"))
   az <- AzureRMR::create_azure_login(get_env("TENANT_ID"))
 
 sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
-rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"), location=get_env("REGION"))
+rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"),
+  location=get_env("REGION"))
 
 
 # Create service principal
@@ -44,7 +45,15 @@ if(inherits(gr, "try-error"))
 
 app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
 
-rg$add_role_assignment(app, "Contributor")
+# retry until successful -- app takes time to appear
+for(i in 1:20) {
+  res <- try(rg$add_role_assignment(app, "Contributor"), silent=TRUE)
+  if(!inherits(res, "try-error"))
+    break
+}
+if(inherits(res, "try-error")) {
+  stop("Unable to set access permissions for service principal")
+}
 
 set_env("SERVICE_PRINCIPAL_APPID", app$properties$appId)
 set_env("SERVICE_PRINCIPAL_CRED", app$password)
@@ -52,20 +61,26 @@ set_env("SERVICE_PRINCIPAL_CRED", app$password)
 
 # Create storage account and container
 
-stor <- rg$create_storage_account(get_env("STORAGE_ACCOUNT_NAME"), kind="BlobStorage")
+stor <- rg$create_storage_account(get_env("STORAGE_ACCOUNT_NAME"),
+  kind="BlobStorage",
+  wait=TRUE)
 
 set_env("STORAGE_ACCOUNT_KEY", stor$list_keys()[1])
 
 endp <- stor$get_blob_endpoint()
 cont <- create_blob_container(endp, get_env("BLOB_CONTAINER_NAME"))
 
-set_env("BLOB_CONTAINER_URL", file.path(cont$endpoint$url, cont$name, "/"))
+set_env("BLOB_CONTAINER_URL", paste0(cont$endpoint$url, cont$name, "/"))
 
 
 # Create batch account
 
-rg$create_resource(type="Microsoft.Batch/batchAccounts", name=get_env("BATCH_ACCOUNT_NAME"),
-  properties=list(AutoStorage=stor$id))
+rg$create_resource(type="Microsoft.Batch/batchAccounts",
+  name=get_env("BATCH_ACCOUNT_NAME"),
+  properties=list(
+    AutoStorage=list(storageAccountId=stor$id)
+  )
+)
 
 # run(
 #   paste("az batch account create",
