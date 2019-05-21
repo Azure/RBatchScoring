@@ -4,15 +4,15 @@
     "parameters": {
         "connections_aci_name": {
             "defaultValue": "aci",
-            "type": "String"
+            "type": "string"
         },
         "workflows_{LOGIC_APP_NAME}_name": {
             "defaultValue": "{LOGIC_APP_NAME}",
-            "type": "String"
+            "type": "string"
         },
         "workflows_{LOGIC_APP_NAME}_path": {
             "defaultValue": "/subscriptions/@{encodeURIComponent('{SUBSCRIPTION_ID}')}/resourceGroups/@{encodeURIComponent('{RESOURCE_GROUP}')}/providers/Microsoft.ContainerInstance/containerGroups/@{encodeURIComponent('{ACI_NAME}')}",
-            "type": "String"
+            "type": "string"
         }
     },
     "variables": {},
