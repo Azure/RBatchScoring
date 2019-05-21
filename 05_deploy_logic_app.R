@@ -44,7 +44,7 @@ writeLines(logic_app_json, "azure/logic_app.json")
 AzureRMR::get_azure_login(get_env("TENANT_ID"))$
   get_subscription(get_env("SUBSCRIPTION_ID"))$
   get_resource_group(get_env("RESOURCE_GROUP"))$
-  deploy_template(get_env("LOGIC_APP_NAME"), "azure/logic_app.json")
+  deploy_template(get_env("LOGIC_APP_NAME"), "azure/logic_app.json", wait=TRUE)
 
 
 # Now see README.md for instructions on how to complete the deployment, including
