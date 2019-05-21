@@ -6,4 +6,3 @@ azure/logic_app.json
 azure/cluster.json
 azure/credentials.json
 .env
-00_resource_specs.R
