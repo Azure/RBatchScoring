@@ -24,11 +24,6 @@ SUBSCRIPTION_ID <- ""
 TENANT_ID <- ""
 
 
-# Your Docker ID
-
-ACR_NAME <- ""
-
-
 # Deployment details -----------------------------------------------------------
 
 # Azure region to deploy resources

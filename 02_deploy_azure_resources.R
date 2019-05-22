@@ -73,6 +73,11 @@ cont <- create_blob_container(endp, get_env("BLOB_CONTAINER_NAME"))
 set_env("BLOB_CONTAINER_URL", paste0(cont$endpoint$url, cont$name, "/"))
 
 
+# Create Azure container registry
+
+acr <- rg$create_acr(get_env("ACR_NAME"))
+registry <- acr$get_docker_registry()
+
 # Create batch account
 
 rg$create_resource(type="Microsoft.Batch/batchAccounts",
@@ -114,11 +119,10 @@ multiupload_blob(cont, src = "models/*", dest = "models")
 
 # Build and upload the worker docker image to Docker Hub
 
-img_id <- paste0(get_env("ACR_NAME"), "/", get_env("WORKER_CONTAINER_IMAGE"))
+worker <- get_env("WORKER_CONTAINER_IMAGE")
 
-call_docker(sprintf("build -t %s -f docker/worker/dockerfile .", img_id))
-call_docker(sprintf("tag %s:latest %s", img_id, img_id))
-call_docker(sprintf("push %s", img_id))
+call_docker(sprintf("build -t %s -f docker/worker/dockerfile .", worker))
+registry$push(worker)
 
 
 # Define cluster ---------------------------------------------------------------

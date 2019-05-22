@@ -16,21 +16,24 @@ library(dotenv)
 library(AzureContainers)
 source("R/utilities.R")
 
-img_id <- paste0(get_env("ACR_NAME"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
+
+registry <- AzureRMR::get_azure_login(get_env("TENANT_ID"))$
+  get_subscription(get_env("SUBSCRIPTION_ID"))$
+  get_resource_group(get_env("RESOURCE_GROUP"))$
+  get_acr(get_env("ACR_NAME"))$
+  get_docker_registry()
+
+
+scheduler <- get_env("SCHEDULER_CONTAINER_IMAGE")
 
 # Build scheduler docker image
 
-call_docker(sprintf("build -t %s -f docker/scheduler/dockerfile .", img_id))
-
-
-# Tag the image
-
-call_docker(sprintf("tag %s:latest %s", img_id, img_id))
+call_docker(sprintf("build -t %s -f docker/scheduler/dockerfile .", scheduler))
 
 
 # Push the image to Docker Hub
 
-call_docker(sprintf("push %s", img_id))
+registry$push(scheduler)
 
 
 # Run the docker container
