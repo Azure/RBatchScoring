@@ -118,7 +118,7 @@ img_id <- paste0(get_env("ACR_NAME"), "/", get_env("WORKER_CONTAINER_IMAGE"))
 
 call_docker(sprintf("build -t %s -f docker/worker/dockerfile .", img_id))
 call_docker(sprintf("tag %s:latest %s", img_id, img_id))
-call_docker(sprintf("sudo docker push %s", img_id))
+call_docker(sprintf("push %s", img_id))
 
 
 # Define cluster ---------------------------------------------------------------
