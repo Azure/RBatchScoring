@@ -16,7 +16,7 @@ library(dotenv)
 library(AzureContainers)
 source("R/utilities.R")
 
-img_id <- paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
+img_id <- paste0(get_env("ACR_NAME"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
 
 # Build scheduler docker image
 

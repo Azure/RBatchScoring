@@ -67,8 +67,8 @@
                                                             "value": "{TENANT_ID}"
                                                         },
                                                         {
-                                                            "name": "DOCKER_ID",
-                                                            "value": "{DOCKER_ID}"
+                                                            "name": "ACR_NAME",
+                                                            "value": "{ACR_NAME}"
                                                         },
                                                         {
                                                             "name": "SERVICE_PRINCIPAL_NAME",
@@ -139,7 +139,7 @@
                                                             "value": "{BLOB_CONTAINER_URL}"
                                                         }
                                                     ],
-                                                    "image": "{DOCKER_ID}/{SCHEDULER_CONTAINER_IMAGE}",
+                                                    "image": "{ACR_NAME}/{SCHEDULER_CONTAINER_IMAGE}",
                                                     "resources": {
                                                         "requests": {
                                                             "cpu": 2,

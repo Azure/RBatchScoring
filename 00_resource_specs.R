@@ -26,7 +26,7 @@ TENANT_ID <- ""
 
 # Your Docker ID
 
-DOCKER_ID <- ""
+ACR_NAME <- ""
 
 
 # Deployment details -----------------------------------------------------------
@@ -65,6 +65,10 @@ BLOB_CONTAINER_NAME <- "rbsbc"
 
 LOGIC_APP_NAME <- "rbsla"
 
+
+# Name of the Azure Container Registry to deploy
+
+ACR_NAME <- "rbsacr"
 
 # Name of the Azure Container Instance to deploy
 

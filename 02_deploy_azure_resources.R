@@ -114,7 +114,7 @@ multiupload_blob(cont, src = "models/*", dest = "models")
 
 # Build and upload the worker docker image to Docker Hub
 
-img_id <- paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
+img_id <- paste0(get_env("ACR_NAME"), "/", get_env("WORKER_CONTAINER_IMAGE"))
 
 call_docker(sprintf("build -t %s -f docker/worker/dockerfile .", img_id))
 call_docker(sprintf("tag %s:latest %s", img_id, img_id))
@@ -152,7 +152,7 @@ create_cluster_json <- function(save_dir = "azure") {
       ),
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
-    containerImage = paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
+    containerImage = paste0(get_env("ACR_NAME"), "/", get_env("WORKER_CONTAINER_IMAGE")),
     commandLine = c()
   )
   
