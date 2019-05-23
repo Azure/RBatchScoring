@@ -55,8 +55,8 @@ Run the following in your local terminal:
 1. Clone the repo `git clone <repo-name>`
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
-4. Log in to Azure using the Azure CLI `az login`
-5. Log in to Docker `sudo docker login`
+<!-- 4. Log in to Azure using the Azure CLI `az login`
+5. Log in to Docker `sudo docker login` -->
 
 ## Deployment steps
 
