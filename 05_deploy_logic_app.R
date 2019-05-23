@@ -31,16 +31,6 @@ writeLines(logic_app_json, "azure/logic_app.json")
 
 # Deploy the Logic App using the Azure CLI
 
-# run(
-#   paste("az group deployment create",
-#     "--name %s",
-#     "--resource-group %s",
-#     "--template-file %s"),
-#     get_env("LOGIC_APP_NAME"),
-#     get_env("RESOURCE_GROUP"),
-#     "azure/logic_app.json"
-# )
-
 AzureRMR::get_azure_login(get_env("TENANT_ID"))$
   get_subscription(get_env("SUBSCRIPTION_ID"))$
   get_resource_group(get_env("RESOURCE_GROUP"))$

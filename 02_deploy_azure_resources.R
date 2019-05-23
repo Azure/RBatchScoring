@@ -47,6 +47,7 @@ app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
 
 # retry until successful -- app takes time to appear
 for(i in 1:20) {
+  sleep(5)
   res <- try(rg$add_role_assignment(app, "Contributor"), silent=TRUE)
   if(!inherits(res, "try-error"))
     break
@@ -156,7 +157,7 @@ create_cluster_json <- function(save_dir = "azure") {
       ),
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
-    containerImage = paste0(get_env("ACR_NAME"), "/", get_env("WORKER_CONTAINER_IMAGE")),
+    containerImage = paste0(get_env("ACR_NAME"), ".azurecr.io/", get_env("WORKER_CONTAINER_IMAGE")),
     commandLine = c()
   )
   

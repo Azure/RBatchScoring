@@ -22,5 +22,4 @@ AzureRMR::get_azure_login(get_env("TENANT_ID"))$
 # Delete the service principal
 
 AzureGraph::get_graph_login(get_env("TENANT_ID"))$
-  get_service_principal(get_env("SERVICE_PRINCIPAL_APPID"))$
   delete_app(svc$properties$appId, confirm=FALSE)
