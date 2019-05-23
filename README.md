@@ -44,11 +44,9 @@ R packages (install by running `Rscript R/install_dependencies.R`):
 - AzureContainers >=1.0.1
 - AzureGraph >= 1.0.0
 - AzureStor >=2.0.1
-- AzureRMR >=2.1.0
+- AzureRMR >=2.1.1.9000
 
-Accounts:
-- [Azure Subscription](https://azure.microsoft.com/free/)
-- [Dockerhub account](https://hub.docker.com/)
+You will also require an [Azure Subscription](https://azure.microsoft.com/free/).
 
 While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) is useful to inspect your storage account.
 

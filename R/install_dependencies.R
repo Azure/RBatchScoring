@@ -7,7 +7,7 @@ install.packages(basic_pkgs)
 
 repo <- "https://mran.microsoft.com/snapshot/2019-05-01"
 
-pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2", "AzureRMR", "AzureStor", "AzureContainers", "AzureGraph")
+pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2", "AzureStor", "AzureContainers", "AzureGraph")
 
 install.packages(pkgs, repos = repo)
 
@@ -24,4 +24,9 @@ devtools::install_github(
 devtools::install_github(
   "gbm-developers/gbm",
   ref = "b59270a787202d7ba2de5f2af7032854691d2b10"
+)
+
+devtools::install_github(
+  "Azure/AzureRMR",
+  ref = "7407db42d38bf6a52b291ce8f9c2e3e7d4c9163f" # 2019-05-23
 )

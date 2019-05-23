@@ -29,7 +29,7 @@ logic_app_json <- replace_template_vars(logic_app_json)
 writeLines(logic_app_json, "azure/logic_app.json")
 
 
-# Deploy the Logic App using the Azure CLI
+# Deploy the Logic App
 
 AzureRMR::get_azure_login(get_env("TENANT_ID"))$
   get_subscription(get_env("SUBSCRIPTION_ID"))$
