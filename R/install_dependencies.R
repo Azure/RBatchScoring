@@ -5,7 +5,7 @@ basic_pkgs <- c("devtools", "dotenv", "jsonlite")
 
 install.packages(basic_pkgs)
 
-repo <- "https://mran.microsoft.com/snapshot/2019-05-01"
+repo <- "https://mran.microsoft.com/snapshot/2019-05-20"
 
 pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2", "AzureStor", "AzureContainers", "AzureGraph")
 
