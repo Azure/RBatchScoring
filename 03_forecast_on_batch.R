@@ -123,11 +123,6 @@ results <- foreach(
   }
 
 
-# Delete the cluster
-
-delete_cluster(clust)
-
-
 # Plot results to validate
 
 if (interactive()) {

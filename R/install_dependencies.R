@@ -13,12 +13,12 @@ install.packages(pkgs, repos = repo)
 
 devtools::install_github(
   "Azure/rAzureBatch",
-  ref = "6ca2bf7b1f4433a27531eaa86f0317499e9b4987" # 2018-08-09
+  ref = "1ab39ca1bb8ae589a6f5c80f5d91c1ee79b1ee8a" # 2019-28-14
 )
 
 devtools::install_github(
   "Azure/doAzureParallel",
-  ref = "6d14d4522b1ff4218f19549b89dea6419a230a53" # 2018-11-26
+  ref = "975858072e8194d465a1f63262e35815ebbf0306" # 2019-02-14
 )
 
 devtools::install_github(

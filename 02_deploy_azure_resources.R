@@ -152,7 +152,7 @@ create_cluster_json <- function(save_dir = "azure") {
     maxTasksPerNode = 1,
     poolSize = list(
       dedicatedNodes = list(
-        min = as.integer(get_env("NUM_NODES")),
+        min = 0,
         max = as.integer(get_env("NUM_NODES"))
       ),
       lowPriorityNodes = list(
@@ -174,3 +174,5 @@ create_cluster_json <- function(save_dir = "azure") {
 write_function(create_cluster_json, "R/create_cluster_json.R")
 
 create_cluster_json(save_dir = "azure")
+
+makeCluster("azure/cluster.json")
