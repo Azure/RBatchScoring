@@ -24,11 +24,6 @@ SUBSCRIPTION_ID <- ""
 TENANT_ID <- ""
 
 
-# Your Docker ID
-
-DOCKER_ID <- ""
-
-
 # Deployment details -----------------------------------------------------------
 
 # Azure region to deploy resources
@@ -65,6 +60,10 @@ BLOB_CONTAINER_NAME <- "rbsbc"
 
 LOGIC_APP_NAME <- "rbsla"
 
+
+# Name of the Azure Container Registry to deploy
+
+ACR_NAME <- "rbsacr"
 
 # Name of the Azure Container Instance to deploy
 

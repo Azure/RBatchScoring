@@ -4,15 +4,15 @@
     "parameters": {
         "connections_aci_name": {
             "defaultValue": "aci",
-            "type": "String"
+            "type": "string"
         },
         "workflows_{LOGIC_APP_NAME}_name": {
             "defaultValue": "{LOGIC_APP_NAME}",
-            "type": "String"
+            "type": "string"
         },
         "workflows_{LOGIC_APP_NAME}_path": {
             "defaultValue": "/subscriptions/@{encodeURIComponent('{SUBSCRIPTION_ID}')}/resourceGroups/@{encodeURIComponent('{RESOURCE_GROUP}')}/providers/Microsoft.ContainerInstance/containerGroups/@{encodeURIComponent('{ACI_NAME}')}",
-            "type": "String"
+            "type": "string"
         }
     },
     "variables": {},
@@ -67,8 +67,8 @@
                                                             "value": "{TENANT_ID}"
                                                         },
                                                         {
-                                                            "name": "DOCKER_ID",
-                                                            "value": "{DOCKER_ID}"
+                                                            "name": "ACR_NAME",
+                                                            "value": "{ACR_NAME}"
                                                         },
                                                         {
                                                             "name": "SERVICE_PRINCIPAL_NAME",
@@ -137,9 +137,21 @@
                                                         {
                                                             "name": "BLOB_CONTAINER_URL",
                                                             "value": "{BLOB_CONTAINER_URL}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_USERNAME",
+                                                            "value": "{REGISTRY_USERNAME}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_PASSWORD",
+                                                            "value": "{REGISTRY_PASSWORD}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_URL",
+                                                            "value": "{REGISTRY_URL}"
                                                         }
                                                     ],
-                                                    "image": "{DOCKER_ID}/{SCHEDULER_CONTAINER_IMAGE}",
+                                                    "image": "{REGISTRY_URL}/{SCHEDULER_CONTAINER_IMAGE}:latest",
                                                     "resources": {
                                                         "requests": {
                                                             "cpu": 2,
@@ -147,6 +159,13 @@
                                                         }
                                                     }
                                                 }
+                                            }
+                                        ],
+                                        "imageRegistryCredentials": [
+                                            {
+                                                "password": "{REGISTRY_PASSWORD}",
+                                                "server": "{REGISTRY_URL}",
+                                                "username": "{REGISTRY_USERNAME}"
                                             }
                                         ],
                                         "osType": "Linux",

@@ -5,21 +5,11 @@ basic_pkgs <- c("devtools", "dotenv", "jsonlite")
 
 install.packages(basic_pkgs)
 
-repo <- "https://mran.microsoft.com/snapshot/2019-01-07"
+repo <- "https://mran.microsoft.com/snapshot/2019-05-20"
 
-pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2")
+pkgs <- c("bayesm", "dplyr", "tidyr", "ggplot2", "AzureStor", "AzureContainers", "AzureGraph")
 
 install.packages(pkgs, repos = repo)
-
-devtools::install_github(
-  "cloudyr/AzureRMR",
-  ref = "5b54604ca63e5e0154318f04cc1056f8f946fcde"
-)
-
-devtools::install_github(
-  "cloudyr/AzureStor",
-  ref = "f7886f2a7e5f0f26100060c94f88a8171ad54782"
-)
 
 devtools::install_github(
   "Azure/rAzureBatch",
@@ -34,4 +24,9 @@ devtools::install_github(
 devtools::install_github(
   "gbm-developers/gbm",
   ref = "b59270a787202d7ba2de5f2af7032854691d2b10"
+)
+
+devtools::install_github(
+  "Azure/AzureRMR",
+  ref = "7407db42d38bf6a52b291ce8f9c2e3e7d4c9163f" # 2019-05-23
 )

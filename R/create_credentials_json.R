@@ -21,6 +21,11 @@ create_credentials_json <- function(save_dir = "azure",
       storageAccountResourceId = storage_account_resource_id,
       credential = get_env("SERVICE_PRINCIPAL_CRED"),
       clientId = get_env("SERVICE_PRINCIPAL_APPID")
+    ),
+    dockerAuthentication = list(
+      "username" = get_env("REGISTRY_USERNAME"),
+      "password" = get_env("REGISTRY_PASSWORD"),
+      "registry" = get_env("REGISTRY_URL")
     )
   )
   

@@ -214,7 +214,7 @@ set_resource_specs <- function(dotenv_file = ".env") {
   expected_envs <- c(
     "SUBSCRIPTION_ID",
     "TENANT_ID",
-    "DOCKER_ID",
+    "ACR_NAME",
     "REGION",
     "RESOURCE_GROUP",
     "SERVICE_PRINCIPAL_NAME",
