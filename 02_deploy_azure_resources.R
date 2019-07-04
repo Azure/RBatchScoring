@@ -30,7 +30,7 @@ set_resource_specs()
 
 az <- try(AzureRMR::get_azure_login(get_env("TENANT_ID")), silent=TRUE)
 if(inherits(az, "try-error"))
-  az <- AzureRMR::create_azure_login(get_env("TENANT_ID"))
+  az <- AzureRMR::create_azure_login(get_env("TENANT_ID"), auth_type = "device_code")
 
 sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
 rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"),
@@ -41,13 +41,13 @@ rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"),
 
 gr <- try(AzureGraph::get_graph_login(get_env("TENANT_ID")), silent=TRUE)
 if(inherits(gr, "try-error"))
-  gr <- AzureGraph::create_graph_login(get_env("TENANT_ID"))
+  gr <- AzureGraph::create_graph_login(get_env("TENANT_ID"), auth_type="device_code")
 
 app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
 
 # retry until successful -- app takes time to appear
 for(i in 1:20) {
-  sleep(5)
+  Sys.sleep(5)
   res <- try(rg$add_role_assignment(app, "Contributor"), silent=TRUE)
   if(!inherits(res, "try-error"))
     break
@@ -78,6 +78,10 @@ set_env("BLOB_CONTAINER_URL", paste0(cont$endpoint$url, cont$name, "/"))
 
 acr <- rg$create_acr(get_env("ACR_NAME"))
 registry <- acr$get_docker_registry()
+
+set_env("REGISTRY_USERNAME", registry$username)
+set_env("REGISTRY_PASSWORD", registry$password)
+set_env("REGISTRY_URL", registry$server)
 
 # Create batch account
 

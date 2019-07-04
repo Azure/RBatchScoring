@@ -137,9 +137,21 @@
                                                         {
                                                             "name": "BLOB_CONTAINER_URL",
                                                             "value": "{BLOB_CONTAINER_URL}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_USERNAME",
+                                                            "value": "{REGISTRY_USERNAME}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_PASSWORD",
+                                                            "value": "{REGISTRY_PASSWORD}"
+                                                        },
+                                                        {
+                                                            "name": "REGISTRY_URL",
+                                                            "value": "{REGISTRY_URL}"
                                                         }
                                                     ],
-                                                    "image": "{ACR_NAME}/{SCHEDULER_CONTAINER_IMAGE}",
+                                                    "image": "{REGISTRY_URL}/{SCHEDULER_CONTAINER_IMAGE}:latest",
                                                     "resources": {
                                                         "requests": {
                                                             "cpu": 2,
@@ -147,6 +159,13 @@
                                                         }
                                                     }
                                                 }
+                                            }
+                                        ],
+                                        "imageRegistryCredentials": [
+                                            {
+                                                "password": "{REGISTRY_PASSWORD}",
+                                                "server": "{REGISTRY_URL}",
+                                                "username": "{REGISTRY_USERNAME}"
                                             }
                                         ],
                                         "osType": "Linux",

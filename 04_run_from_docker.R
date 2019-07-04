@@ -40,4 +40,4 @@ registry$push(scheduler)
 
 env_vars <- get_dotenv_vars()
 
-call_docker(paste("run", paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "), img_id))
+call_docker(paste("run", paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "), scheduler))
