@@ -7,13 +7,11 @@ RUN R -e 'devtools::install_github("Azure/rAzureBatch", \
 
 RUN R -e 'devtools::install_github("Azure/doAzureParallel", \
   ref = "975858072e8194d465a1f63262e35815ebbf0306")'
-
-RUN r -e 'devtools::install_github("cloudyr/AzureStor", \
-  ref = "7d7f03c9d64bed0a076a63437117b21958e75bf9")'
   
-RUN install2.r --error --repos https://mran.microsoft.com/snapshot/2019-01-07 \
+RUN install2.r --error --repos https://mran.microsoft.com/snapshot/2019-05-20 \
   dotenv \
-  jsonlite
+  jsonlite \
+  AzureStor
 
 WORKDIR /job
 ADD R /job/R

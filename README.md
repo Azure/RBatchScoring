@@ -41,12 +41,12 @@ R packages (install by running `Rscript R/install_dependencies.R`):
 - jsonlite >=1.5
 - devtools >=1.13.4
 - dotenv >=1.0.2
-- AzureStor >=1.0.0
-- AzureRMR >=1.0.0
+- AzureContainers >=1.0.1
+- AzureGraph >= 1.0.0
+- AzureStor >=2.0.1
+- AzureRMR >=2.1.1.9000
 
-Accounts:
-- [Azure Subscription](https://azure.microsoft.com/free/)
-- [Dockerhub account](https://hub.docker.com/)
+You will also require an [Azure Subscription](https://azure.microsoft.com/free/).
 
 While it is not required, [Azure Storage Explorer](https://azure.microsoft.com/features/storage-explorer/) is useful to inspect your storage account.
 
@@ -55,8 +55,8 @@ Run the following in your local terminal:
 1. Clone the repo `git clone <repo-name>`
 2. `cd` into the repo
 3. Install R dependencies `Rscript R/install_dependencies.R`
-4. Log in to Azure using the Azure CLI `az login`
-5. Log in to Docker `sudo docker login`
+<!-- 4. Log in to Azure using the Azure CLI `az login`
+5. Log in to Docker `sudo docker login` -->
 
 ## Deployment steps
 

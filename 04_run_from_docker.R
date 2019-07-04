@@ -13,40 +13,31 @@
 # docker/scheduler/dockerfile
 
 library(dotenv)
+library(AzureContainers)
 source("R/utilities.R")
 
 
+registry <- AzureRMR::get_azure_login(get_env("TENANT_ID"))$
+  get_subscription(get_env("SUBSCRIPTION_ID"))$
+  get_resource_group(get_env("RESOURCE_GROUP"))$
+  get_acr(get_env("ACR_NAME"))$
+  get_docker_registry()
+
+
+scheduler <- get_env("SCHEDULER_CONTAINER_IMAGE")
+
 # Build scheduler docker image
 
-run(
-  "sudo docker build -t %s -f docker/scheduler/dockerfile .",
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
-
-
-# Tag the image
-
-run(
-  "sudo docker tag %s:latest %s",
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE")),
-  paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
+call_docker(sprintf("build -t %s -f docker/scheduler/dockerfile .", scheduler))
 
 
 # Push the image to Docker Hub
 
-run("sudo docker push %s",
-    paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-)
+registry$push(scheduler)
 
 
 # Run the docker container
 
 env_vars <- get_dotenv_vars()
 
-run(
-  paste("sudo docker run", 
-      paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "),
-      paste0(get_env("DOCKER_ID"), "/", get_env("SCHEDULER_CONTAINER_IMAGE"))
-  )
-)
+call_docker(paste("run", paste0("-e ", env_vars, "=", get_env(env_vars), collapse = " "), scheduler))

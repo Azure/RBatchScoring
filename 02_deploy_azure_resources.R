@@ -17,6 +17,7 @@ library(dotenv)
 library(jsonlite)
 library(doAzureParallel)
 library(AzureStor)
+library(AzureContainers)
 
 source("R/options.R")
 source("R/utilities.R")
@@ -25,89 +26,70 @@ source("R/create_credentials_json.R")
 
 set_resource_specs()
 
-
-# Create resources with Azure CLI ----------------------------------------------
-
 # Create resource group
 
-run("az group create --name %s --location %s --query properties.provisioningState",
-    get_env("RESOURCE_GROUP"), get_env("REGION"))
+az <- try(AzureRMR::get_azure_login(get_env("TENANT_ID")), silent=TRUE)
+if(inherits(az, "try-error"))
+  az <- AzureRMR::create_azure_login(get_env("TENANT_ID"), auth_type = "device_code")
+
+sub <- az$get_subscription(get_env("SUBSCRIPTION_ID"))
+rg <- sub$create_resource_group(get_env("RESOURCE_GROUP"),
+  location=get_env("REGION"))
 
 
-# Create service principal. You can ignore any retry warnings. If you have an
-# existing service principal of the same name, you can ignore the error message.
+# Create service principal
 
-run(
-  paste("az ad sp create-for-rbac",
-        "--name %s --subscription %s --scopes %s"),
-  paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-  get_env("SUBSCRIPTION_ID"),
-  paste0("/subscriptions/", get_env("SUBSCRIPTION_ID"),
-         "/resourceGroups/", get_env("RESOURCE_GROUP"))
-)
+gr <- try(AzureGraph::get_graph_login(get_env("TENANT_ID")), silent=TRUE)
+if(inherits(gr, "try-error"))
+  gr <- AzureGraph::create_graph_login(get_env("TENANT_ID"), auth_type="device_code")
 
+app <- gr$create_app(get_env("SERVICE_PRINCIPAL_NAME"))
 
-# Retrieve the app ID
+# retry until successful -- app takes time to appear
+for(i in 1:20) {
+  Sys.sleep(5)
+  res <- try(rg$add_role_assignment(app, "Contributor"), silent=TRUE)
+  if(!inherits(res, "try-error"))
+    break
+}
+if(inherits(res, "try-error")) {
+  stop("Unable to set access permissions for service principal")
+}
 
-set_env(
-  "SERVICE_PRINCIPAL_APPID",
-  run(
-    "az ad sp show --id %s --query appId -o tsv",
-    paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-    intern = TRUE
-  )
-)
+set_env("SERVICE_PRINCIPAL_APPID", app$properties$appId)
+set_env("SERVICE_PRINCIPAL_CRED", app$password)
 
 
-# Retrieve the service principal's credential
+# Create storage account and container
 
-set_env(
-  "SERVICE_PRINCIPAL_CRED",
-  run("az ad sp credential reset --name %s --query password -o tsv",
-      paste0("https://", get_env("SERVICE_PRINCIPAL_NAME")),
-      intern = TRUE)
-)
+stor <- rg$create_storage_account(get_env("STORAGE_ACCOUNT_NAME"),
+  kind="BlobStorage",
+  wait=TRUE)
 
+set_env("STORAGE_ACCOUNT_KEY", stor$list_keys()[1])
 
-# Create storage account
+endp <- stor$get_blob_endpoint()
+cont <- create_blob_container(endp, get_env("BLOB_CONTAINER_NAME"))
 
-run(
-  paste("az storage account create",
-        "--kind BlobStorage --sku Standard_LRS --access-tier Hot",
-        "--name %s --resource-group %s --location %s --query provisioningState"),
-  get_env("STORAGE_ACCOUNT_NAME"),
-  get_env("RESOURCE_GROUP"),
-  get_env("REGION")
-)
+set_env("BLOB_CONTAINER_URL", paste0(cont$endpoint$url, cont$name, "/"))
 
 
-# Retrieve storage account key
+# Create Azure container registry
 
-set_env(
-  "STORAGE_ACCOUNT_KEY",
-  run("az storage account keys list --account-name %s --query [0].value -o tsv",
-        get_env("STORAGE_ACCOUNT_NAME"), intern = TRUE)
-)
+acr <- rg$create_acr(get_env("ACR_NAME"))
+registry <- acr$get_docker_registry()
 
-
-# Construct blob container URL
-
-set_env("BLOB_CONTAINER_URL",
-       paste0(
-         "https://", get_env("STORAGE_ACCOUNT_NAME"),
-         ".blob.core.windows.net/", get_env("BLOB_CONTAINER_NAME"), "/"
-       )
-)
-
+set_env("REGISTRY_USERNAME", registry$username)
+set_env("REGISTRY_PASSWORD", registry$password)
+set_env("REGISTRY_URL", registry$server)
 
 # Create batch account
 
-run(
-  paste("az batch account create",
-        "--name %s --resource-group %s --location %s --storage-account %s",
-        "--query provisioningState"),
-  get_env("BATCH_ACCOUNT_NAME"), get_env("RESOURCE_GROUP"),
-  get_env("REGION"), get_env("STORAGE_ACCOUNT_NAME")
+rg$create_resource(type="Microsoft.Batch/batchAccounts",
+  name=get_env("BATCH_ACCOUNT_NAME"),
+  properties=list(
+    AutoStorage=list(storageAccountId=stor$id)
+  )
 )
 
 
@@ -126,12 +108,7 @@ lapply(2:floor(TARGET_SKUS / 11),
        })
 
 
-# Create Blob container and upload resources -----------------------------------
-
-cont <- create_blob_container(
-  get_env("BLOB_CONTAINER_URL"),
-  key = get_env("STORAGE_ACCOUNT_KEY")
-)
+# upload resources -------------------------------------------------------------
 
 multiupload_blob(cont, src = "data/history/*", dest = "data/history")
 multiupload_blob(cont, src = "data/futurex/*", dest = "data/futurex")
@@ -147,19 +124,10 @@ multiupload_blob(cont, src = "models/*", dest = "models")
 
 # Build and upload the worker docker image to Docker Hub
 
-run(
-  "sudo docker build -t %s -f docker/worker/dockerfile .",
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
-)
+worker <- get_env("WORKER_CONTAINER_IMAGE")
 
-run(
-  "sudo docker tag %s:latest %s",
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
-  paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE"))
-)
-
-run("sudo docker push %s",
-    paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")))
+call_docker(sprintf("build -t %s -f docker/worker/dockerfile .", worker))
+registry$push(worker)
 
 
 # Define cluster ---------------------------------------------------------------
@@ -193,7 +161,7 @@ create_cluster_json <- function(save_dir = "azure") {
       ),
       autoscaleFormula = "QUEUE_AND_RUNNING"
     ),
-    containerImage = paste0(get_env("DOCKER_ID"), "/", get_env("WORKER_CONTAINER_IMAGE")),
+    containerImage = paste0(get_env("ACR_NAME"), ".azurecr.io/", get_env("WORKER_CONTAINER_IMAGE")),
     commandLine = c()
   )
   
